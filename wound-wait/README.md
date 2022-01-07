@@ -1,19 +1,17 @@
-# 2PL
+# SS2PL wound-wait variant
 
 ## How to use
-- Build masstree
+- Build masstree in ccbench directory
 ```
-$ cd ../
-$ ./bootstrap.sh
+$ ./build_tools/bootstrap.sh
 ```
-This makes ../third_party/masstree/libkohler_masstree_json.a used by building ss2pl.
+This makes ccbench/third_party/masstree/libkohler_masstree_json.a used by building ss2pl.
 - Build mimalloc
 ```
-$ cd ../
-$ ./bootstrap_mimalloc.sh
+$ ./build_tools/bootstrap_mimalloc.sh
 ```
-This makes ../third_party/mimalloc/out/release/libmimalloc.a used by building ss2pl.
-- Build 
+This makes ccbench/third_party/mimalloc/out/release/libmimalloc.a used by building ss2pl.
+- Build in wound-wait directory
 ```
 $ mkdir build
 $ cd build
