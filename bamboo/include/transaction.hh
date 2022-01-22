@@ -75,7 +75,7 @@ public:
 
   void LockRetire(uint64_t key);
 
-  bool spinLock(int txn, uint64_t key);
+  bool spinLock(uint64_t key);
 
   bool lockUpgrade(int t, uint64_t key);
 };

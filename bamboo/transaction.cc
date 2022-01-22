@@ -11,7 +11,7 @@
 #include "include/common.hh"
 #include "include/transaction.hh"
 
-#define PRINTF
+// #define PRINTF
 // #define BAMBOO
 
 using namespace std;
@@ -77,8 +77,9 @@ void TxExecutor::abort()
    */
   read_set_.clear();
   write_set_.clear();
-
+#ifdef PRINTF
   printf("tx%d ts %d abort complete\n", thid_, thread_timestamp[thid_]);
+#endif
   ++sres_->local_abort_counts_;
 
 #if BACK_OFF
@@ -93,6 +94,7 @@ void TxExecutor::abort()
 #endif
 
 #endif
+  usleep(1);
 }
 
 /**
@@ -120,7 +122,9 @@ void TxExecutor::commit()
    */
   read_set_.clear();
   write_set_.clear();
+#ifdef PRINTF
   printf("tx%d ts %d commit complete\n", thid_, thread_timestamp[thid_]);
+#endif
 }
 
 /**
@@ -199,7 +203,7 @@ void TxExecutor::read(uint64_t key)
 // to here ***
 #endif
   LockAcquire(key, LockType::SH);
-  if (spinLock(thid_, key))
+  if (spinLock(key))
   {
     read_set_.emplace_back(key, tuple, tuple->val_);
   }
@@ -263,7 +267,7 @@ void TxExecutor::write(uint64_t key)
       {
         // upgrade success
         // remove old element of read lock list.
-        if (spinLock(thid_, key))
+        if (spinLock(key))
         {
           write_set_.emplace_back(key, (*rItr).rcdptr_);
           read_set_.erase(rItr);
@@ -318,7 +322,7 @@ void TxExecutor::write(uint64_t key)
 // to here ***
 #endif
   LockAcquire(key, LockType::EX);
-  if (spinLock(thid_, key))
+  if (spinLock(key))
   {
     tuple->writers[this->thid_] = 1; // *** added by tatsu
     w_lock_list_.emplace_back(&tuple->lock_);
@@ -503,64 +507,88 @@ bool TxExecutor::conflict(LockType x, LockType y)
 
 void TxExecutor::PromoteWaiters(uint64_t key)
 {
-  // printf("lets promote\n");
+// printf("lets promote\n");
+#ifdef PRINTF
+  printf("tx %d tuple %d promotewaiters\n", thid_, (int)key);
+#endif
   Tuple *tuple;
   tuple = get_tuple(Table, key);
   int t;
-  int owner = tuple->owners[0];
+  int owner;
   LockType t_type;
   LockType owners_type;
   LockType retired_type;
   bool owner_exists = false;
   // bool holds_shared_lock = false;
-
-  if (tuple->owners.size() > 0)
-  {
-    owners_type = (LockType)tuple->req_type[owner];
-    owner_exists = true;
-  }
   // printf("tuple %d waiter_list size is %lu\n", tuple->key, tuple->waiters->wait_list.size());
-  for (int i = 0; i < tuple->waiters.size(); i++)
+  while (tuple->waiters.size() > 0)
   {
-    // printf("promote\n");
-    t = tuple->waiters[i];
+    if (tuple->owners.size() > 0)
+    {
+      owner = tuple->owners[0];
+      owners_type = (LockType)tuple->req_type[owner];
+      owner_exists = true;
+    }
+    t = tuple->waiters[0];
     t_type = (LockType)tuple->req_type[t];
     if (owner_exists && conflict(t_type, owners_type))
     {
-#ifdef PRINTF
-      // printf("Promotion break\n");
-#endif
       break;
     }
-    // else if (t_type == LockType::SH)
-    // {
-    //   if (tuple->sharedLock() == false)
-    //     break;
-    //   else
-    //     holds_shared_lock = true;
-    // }
     if (tuple->remove(t, tuple->waiters) == false)
     {
       printf("REMOVE FAILURE: PromoteWaiters tx%d\n", thid_);
       exit(1);
     }
     tuple->ownersAdd(t);
-// if (holds_shared_lock == true)
-// {
-//   tuple->sharedUnlock();
-// }
-#ifdef BAMBOO
-    for (auto retired : tuple->retired)
-    {
-      retired_type = (LockType)tuple->req_type[retired];
-      if (conflict(t_type, retired_type))
-      {
-        commit_semaphore[t]++;
-        break;
-      }
-    }
-#endif
   }
+  //   for (int i = 0; i < tuple->waiters.size(); i++)
+  //   {
+  //     if (tuple->owners.size() > 0)
+  //     {
+  //       owner = tuple->owners[0];
+  //       owners_type = (LockType)tuple->req_type[owner];
+  //       owner_exists = true;
+  //     }
+  //     // printf("promote\n");
+  //     t = tuple->waiters[i];
+  //     t_type = (LockType)tuple->req_type[t];
+  //     if (owner_exists && conflict(t_type, owners_type))
+  //     {
+  // #ifdef PRINTF
+  //       // printf("Promotion break\n");
+  // #endif
+  //       break;
+  //     }
+  //     // else if (t_type == LockType::SH)
+  //     // {
+  //     //   if (tuple->sharedLock() == false)
+  //     //     break;
+  //     //   else
+  //     //     holds_shared_lock = true;
+  //     // }
+  //     if (tuple->remove(t, tuple->waiters) == false)
+  //     {
+  //       printf("REMOVE FAILURE: PromoteWaiters tx%d\n", thid_);
+  //       exit(1);
+  //     }
+  //     tuple->ownersAdd(t);
+  // // if (holds_shared_lock == true)
+  // // {
+  // //   tuple->sharedUnlock();
+  // // }
+  // #ifdef BAMBOO
+  //     for (auto retired : tuple->retired)
+  //     {
+  //       retired_type = (LockType)tuple->req_type[retired];
+  //       if (conflict(t_type, retired_type))
+  //       {
+  //         commit_semaphore[t]++;
+  //         break;
+  //       }
+  //     }
+  // #endif
+  //   }
   // printf("tuple %d waiter_list size is %lu\n", tuple->key, tuple->waiters->wait_list.size());
   // printf("tuple %d owner_list size is %lu\n", tuple->key, tuple->owners->owner_list.size());
 }
@@ -626,7 +654,6 @@ void TxExecutor::LockAcquire(uint64_t key, LockType lock_type)
       // printf("tx%d ts %d PromoteWaiters\n", thid_, thread_timestamp[thid_]);
 #endif
       PromoteWaiters(key);
-
       tuple->lock_.w_unlock();
       return;
     }
@@ -693,6 +720,17 @@ void TxExecutor::LockRelease(int txn, uint64_t key, bool is_abort)
       }
 #ifdef PRINTF
       printf("tx%d ts %d LockRelease tuple %d complete\n", thid_, thread_timestamp[thid_], (int)key);
+      if (tuple->owners.size() == 0)
+      {
+        printf("tuple %d no owners\n", (int)key);
+      }
+      else
+      {
+        for (int i = 0; i < tuple->owners.size(); i++)
+        {
+          printf("tuple %d owners[%d] is tx%d ts %d locktype = %d\n", (int)key, i, tuple->owners[i], thread_timestamp[tuple->owners[i]], tuple->req_type[i]);
+        }
+      }
 #endif
 #ifdef BAMBOO
       all_owners = concat(tuple->retired, tuple->owners);
@@ -767,7 +805,7 @@ bool Tuple::sortAdd(int txn, T &list)
   return true;
 }
 
-bool TxExecutor::spinLock(int txn, uint64_t key)
+bool TxExecutor::spinLock(uint64_t key)
 {
   Tuple *tuple;
   tuple = get_tuple(Table, key);
@@ -783,7 +821,7 @@ bool TxExecutor::spinLock(int txn, uint64_t key)
   {
     for (int i = 0; i < tuple->owners.size(); i++)
     {
-      if (txn == tuple->owners[i])
+      if (thid_ == tuple->owners[i])
       {
 #ifdef PRINTF
         // printf("tx%d ts %d found\n", thid_, thread_timestamp[thid_]);
@@ -792,38 +830,46 @@ bool TxExecutor::spinLock(int txn, uint64_t key)
       }
     }
 #ifdef PRINTF
-    // printf("tx%d ts %d not found: tuple is %d\n", thid_, thread_timestamp[thid_], (int)key);
+    printf("tx%d ts %d not found: tuple is %d\n", thid_, thread_timestamp[thid_], (int)key);
     for (int i = 0; i < tuple->owners.size(); i++)
     {
-      // printf("tuple %d owners[%d] is tx%d ts %d\n", (int)key, i, tuple->owners[i], thread_timestamp[tuple->owners[i]]);
+      printf("tuple %d owners[%d] is tx%d ts %d locktype = %d\n", (int)key, i, tuple->owners[i], thread_timestamp[tuple->owners[i]], tuple->req_type[i]);
     }
     for (int i = 0; i < tuple->waiters.size(); i++)
     {
-      // printf("tuple %d waiters[%d] is tx%d ts %d\n", (int)key, i, tuple->waiters[i], thread_timestamp[tuple->waiters[i]]);
+      printf("tuple %d waiters[%d] is tx%d ts %d locktype = %d\n", (int)key, i, tuple->waiters[i], thread_timestamp[tuple->waiters[i]], tuple->req_type[i]);
     }
 #endif
-    if (thread_stats[txn] == 1)
+    if (tuple->lock_.w_trylock())
     {
+      checkWound(tuple->owners, (LockType)tuple->req_type[thid_], tuple);
+      PromoteWaiters(key);
+      if (thread_stats[thid_] == 1)
+      {
 #ifdef PRINTF
-      // printf("tx%d ts %d should abort\n", thid_, thread_timestamp[thid_]); //*** added by tatsu
+        printf("tx%d ts %d should abort in spin lock\n", thid_, thread_timestamp[thid_]); //*** added by tatsu
 #endif
-      for (int i = 0; i < tuple->waiters.size(); i++)
-      {
-        if(thid_ == tuple->waiters[i])
-          tuple->waiters.erase(tuple->waiters.begin() + i);
+        for (int i = 0; i < tuple->waiters.size(); i++)
+        {
+          if (thid_ == tuple->waiters[i])
+            tuple->waiters.erase(tuple->waiters.begin() + i);
+        }
+        for (int i = 0; i < tuple->owners.size(); i++)
+        {
+          if (thid_ == tuple->owners[i])
+            tuple->owners.erase(tuple->owners.begin() + i);
+        }
+        // LockRelease(thid_, key, true);
+        //PromoteWaiters(key);
+        status_ = TransactionStatus::aborted; //*** added by tatsu
+        tuple->lock_.w_unlock();
+        return false;
       }
-      for (int i = 0; i < tuple->owners.size(); i++)
-      {
-        if(thid_ == tuple->owners[i])
-          tuple->owners.erase(tuple->owners.begin() + i);
-      }
-      // LockRelease(thid_, key, true);
-      status_ = TransactionStatus::aborted; //*** added by tatsu
-      return false;
+      tuple->lock_.w_unlock();
     }
-    #ifdef PRINTF
-    // usleep(1000000);
-    #endif
+#ifdef PRINTF
+// usleep(1000000);
+#endif
     usleep(1);
   }
 }
@@ -839,6 +885,7 @@ bool TxExecutor::lockUpgrade(int txn, uint64_t key)
 #ifdef PRINTF
       printf("tx%d ts %d lockUpgrade tuple %d start\n", txn, thread_timestamp[thid_], (int)key);
 #endif
+      checkWound(tuple->owners, LockType::EX, tuple);
       if (tuple->owners.size() == 1)
       {
         if (tuple->req_type[txn] == LockType::SH)
@@ -852,10 +899,10 @@ bool TxExecutor::lockUpgrade(int txn, uint64_t key)
       printf("tx%d ts %d lockUpgrade failed\n", txn, thread_timestamp[thid_]);
       for (int i = 0; i < tuple->owners.size(); i++)
       {
-        printf("tuple %d owners[%d] is tx%d ts %d\n", (int)key, i, tuple->owners[i], thread_timestamp[tuple->owners[i]]);
+        printf("tuple %d owners[%d] is tx%d ts %d locktype = %d\n", (int)key, i, tuple->owners[i], thread_timestamp[tuple->owners[i]], tuple->req_type[i]);
       }
 #endif
-      checkWound(tuple->owners, LockType::EX, tuple);
+      //checkWound(tuple->owners, LockType::EX, tuple);
       if (thread_stats[txn] == 1)
       {
 #ifdef PRINTF
@@ -866,9 +913,9 @@ bool TxExecutor::lockUpgrade(int txn, uint64_t key)
         return false;
       }
       tuple->lock_.w_unlock();
-      #ifdef PRINTF
-      // usleep(1000000);
-      #endif
+#ifdef PRINTF
+// usleep(1000000);
+#endif
       usleep(1);
     }
     else
@@ -878,3 +925,5 @@ bool TxExecutor::lockUpgrade(int txn, uint64_t key)
     }
   }
 }
+
+// TODO: put spinlock in lockacquire

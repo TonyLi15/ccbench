@@ -137,7 +137,7 @@ void worker(size_t thid, char &ready, const bool &start, const bool &quit)
   RETRY:
     thread_stats[thid] = 0;                                                               //*** added by tatsu
     thread_timestamp[thid] = __atomic_add_fetch(&central_timestamp, 1, __ATOMIC_SEQ_CST); //*** added by tatsu
-    printf("tx%d starts: timestamp = %d\n", thid, thread_timestamp[thid]);
+    //printf("tx%d starts: timestamp = %d\n", thid, thread_timestamp[thid]);
     if (loadAcquire(quit))
       break;
     if (thid == 0)
@@ -149,11 +149,12 @@ void worker(size_t thid, char &ready, const bool &start, const bool &quit)
     {
       if ((*itr).ope_ == Ope::READ)
       {
+        //printf("tx%d read tup %d\n", thid, (*itr).key_);
         trans.read((*itr).key_);
       }
       else if ((*itr).ope_ == Ope::WRITE)
       {
-        printf("tx%d write tup %d\n", thid, (*itr).key_);
+        //printf("tx%d write tup %d\n", thid, (*itr).key_);
         trans.write((*itr).key_);
         // printf("tx%d returned\n", thid);
       }
