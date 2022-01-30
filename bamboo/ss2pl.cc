@@ -31,81 +31,17 @@
 #include "include/transaction.hh"
 #include "include/util.hh"
 
+// #define NONTS
+// #define PRINTF
+
+#ifndef NONTS
 long long int central_timestamp = 0; //*** added by tatsu
+#endif
 
-// void Tuple::retiredAdd(int txn)
-// {
-//   if (retired.size() == 0)
-//   {
-//     retired.push_back(txn);
-//     return;
-//   }
-//   for (auto tid = retired.begin(); tid != retired.end(); tid++)
-//   { // reverse_iterator might be better
-//     if (thread_timestamp[txn] < thread_timestamp[(*tid)])
-//     {
-//       retired.insert(tid, txn);
-//       return;
-//     }
-//   }
-// }
-
-// void Tuple::waitersAdd(int txn)
-// {
-//   if (waiters.size() == 0)
-//   {
-//     waiters.push_back(txn);
-//     return;
-//   }
-//   for (auto tid = waiters.begin(); tid != waiters.end(); tid++)
-//   { // reverse_iterator might be better
-//     if (thread_timestamp[txn] < thread_timestamp[(*tid)])
-//     {
-//       waiters.insert(tid, txn);
-//       return;
-//     }
-//   }
-// }
 void Tuple::ownersAdd(int txn)
 {
   owners.push_back(txn);
 }
-
-// void Tuple::retiredRemove(int txn)
-// {
-//   for (int i = 0; i < retired.size(); i++)
-//   {
-//     if (txn == retired[i])
-//     {
-//       retired.erase(retired.begin() + i);
-//       req_type[txn] = 0;
-//       return;
-//     }
-//   }
-// }
-// void Tuple::ownersRemove(int txn)
-// {
-//   for (int i = 0; i < owners.size(); i++)
-//   {
-//     if (txn == owners[i])
-//     {
-//       owners.erase(owners.begin() + i);
-//       req_type[txn] = 0;
-//       return;
-//     }
-//   }
-// }
-// void Tuple::waitersRemove(int txn)
-// {
-//   for (int i = 0; i < waiters.size(); i++)
-//   {
-//     if (txn == waiters[i])
-//     {
-//       waiters.erase(waiters.begin() + i);
-//       return;
-//     }
-//   }
-// }
 
 void worker(size_t thid, char &ready, const bool &start, const bool &quit)
 {
@@ -135,9 +71,14 @@ void worker(size_t thid, char &ready, const bool &start, const bool &quit)
     makeProcedure(trans.pro_set_, rnd, zipf, FLAGS_tuple_num, FLAGS_max_ope, FLAGS_thread_num,
                   FLAGS_rratio, FLAGS_rmw, FLAGS_ycsb, false, thid, myres);
   RETRY:
-    thread_stats[thid] = 0;                                                               //*** added by tatsu
-    thread_timestamp[thid] = __atomic_add_fetch(&central_timestamp, 1, __ATOMIC_SEQ_CST); //*** added by tatsu
-    //printf("tx%d starts: timestamp = %d\n", thid, thread_timestamp[thid]);
+    thread_stats[thid] = 0;
+    commit_semaphore[thid] = 0;
+#ifndef NONTS
+    thread_timestamp[thid] = __atomic_add_fetch(&central_timestamp, 1, __ATOMIC_SEQ_CST);
+#endif
+#ifdef PRINTF
+    printf("tx%d starts: timestamp = %d\n", thid, thread_timestamp[thid]);
+#endif
     if (loadAcquire(quit))
       break;
     if (thid == 0)
@@ -149,14 +90,17 @@ void worker(size_t thid, char &ready, const bool &start, const bool &quit)
     {
       if ((*itr).ope_ == Ope::READ)
       {
-        //printf("tx%d read tup %d\n", thid, (*itr).key_);
+#ifdef PRINTF
+        printf("tx%d read tup %d\n", thid, (*itr).key_);
+#endif
         trans.read((*itr).key_);
       }
       else if ((*itr).ope_ == Ope::WRITE)
       {
-        //printf("tx%d write tup %d\n", thid, (*itr).key_);
+#ifdef PRINTF
+        printf("tx%d write tup %d\n", thid, (*itr).key_);
+#endif
         trans.write((*itr).key_);
-        // printf("tx%d returned\n", thid);
       }
       else if ((*itr).ope_ == Ope::READ_MODIFY_WRITE)
       {
@@ -168,19 +112,39 @@ void worker(size_t thid, char &ready, const bool &start, const bool &quit)
       }
 
       if (thread_stats[thid] == 1)
-      {      
-        // printf("tx%d is aborting\n", thid);                                       //*** added by tatsu
-        trans.status_ = TransactionStatus::aborted; //*** added by tatsu
-        trans.abort();                              //*** added by tatsu
-        goto RETRY;                                 //*** added by tatsu
-      }                                             //*** added by tatsu
+      {                                  
+        trans.status_ = TransactionStatus::aborted;
+        trans.abort();                             
+        goto RETRY;                                
+      }                                            
       if (trans.status_ == TransactionStatus::aborted)
       {
         trans.abort();
         goto RETRY;
       }
     }
-
+#ifdef PRINTF
+    int count = 0;
+#endif
+    while (commit_semaphore[thid] > 0 && thread_stats[thid] == 0)
+    {
+      usleep(1);
+#ifdef PRINTF
+      count++;
+      if (count % 100000 == 0)
+      {
+        printf("TX%d WAITING TOO LONG\n", (int)thid);
+        // for (int i = 0; i < FLAGS_thread_num; i++)
+        //   printf("tx%d commit semaphore %d\n", i, commit_semaphore[i]);
+      }
+#endif
+    }
+    if (thread_stats[thid] == 1)
+    {                                 
+      trans.status_ = TransactionStatus::aborted; 
+      trans.abort();                              
+      goto RETRY;                                 
+    }
     trans.commit();
     /**
      * local_commit_counts is used at ../include/backoff.hh to calcurate about
@@ -200,7 +164,7 @@ try
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   chkArg();
   makeDB();
-  printf("SS2PL wound-wait version\n");
+  printf("Bamboo\n");
   for (int i = 0; i < FLAGS_thread_num; i++)
   {                          //*** added by tatsu
     thread_stats[i] = 0;     //*** added by tatsu
@@ -235,5 +199,6 @@ try
 }
 catch (bad_alloc)
 {
+  printf("bad alloc\n");
   ERR;
 }

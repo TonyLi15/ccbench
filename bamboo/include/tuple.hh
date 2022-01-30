@@ -37,14 +37,8 @@ public:
   vector<int> waiters; // *** added by tatsu: writers[i] = 1 means thread i is writing this tuple
 
   template <typename T> bool sortAdd(int txn, T &list);
-  // void retiredAdd(int txn);
   void ownersAdd(int txn);
-  // void waitersAdd(int txn);
-  // void retiredRemove(int txn);
-  // void ownersRemove(int txn);
-  // void waitersRemove(int txn);
   template <typename T> bool remove(int txn, T &list);
-  // void add(int txn);
 
   // template <typename T>
   // void sortAdd(int txn, T &list)

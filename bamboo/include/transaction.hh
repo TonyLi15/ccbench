@@ -58,7 +58,7 @@ public:
 
   void abort();
 
-  void unlockList();
+  void unlockList(bool is_abort);
 
   // inline
   Tuple *get_tuple(Tuple *table, uint64_t key) { return &table[key]; }
@@ -71,11 +71,17 @@ public:
 
   void LockAcquire(uint64_t key, LockType lock_type);
 
-  void LockRelease(int txn, uint64_t key, bool is_abort);
+  void LockRelease(uint64_t key, bool is_abort);
 
   void LockRetire(uint64_t key);
 
-  bool spinLock(uint64_t key);
+  bool spinWait(uint64_t key);
 
-  bool lockUpgrade(int t, uint64_t key);
+  bool lockUpgrade(uint64_t key);
+
+  void checkLists(uint64_t key);
+
+  void eraseFromLists(uint64_t key); // erase txn from waiters and owners lists in case of abort during spinwait
+  
+  bool woundSuccess(uint64_t key, const int killer, const LockType my_type);
 };
