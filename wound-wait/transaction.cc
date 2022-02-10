@@ -11,6 +11,8 @@
 #include "include/common.hh"
 #include "include/transaction.hh"
 
+// #define NONTS
+
 using namespace std;
 
 extern void display_procedure_vector(std::vector<Procedure> &pro);
@@ -162,7 +164,11 @@ void TxExecutor::read(uint64_t key) {
        */
       for (int i = 0; i < FLAGS_thread_num; i++) {
         if (tuple->writers[i] == 1 && 
+        #ifndef NONTS
         thread_timestamp[i] > thread_timestamp[this->thid_]) {
+        #else
+        i > thid_) {
+        #endif
           thread_stats[i] = 1;
         }
       }
@@ -193,8 +199,18 @@ void TxExecutor::write(uint64_t key) {
 
   // if it already wrote the key object once.
   if (searchWriteSet(key)) goto FINISH_WRITE;
+  /**
+   * Search tuple from data structure.
+   */
   Tuple *tuple;
+#if MASSTREE_USE
+  tuple = MT.get_value(key);
+#if ADD_ANALYSIS
+  ++sres_->local_tree_traversal_;
+#endif
+#else
   tuple = get_tuple(Table, key);
+#endif
   for (auto rItr = read_set_.begin(); rItr != read_set_.end(); ++rItr) {
     if ((*rItr).key_ == key) {  // hit
 #if DLR0
@@ -205,7 +221,11 @@ void TxExecutor::write(uint64_t key) {
         if (!(*rItr).rcdptr_->lock_.tryupgrade()) {
           for (int i = 0; i < FLAGS_thread_num; i++) {
             if ((tuple->writers[i] == 1 || tuple->readers[i] == 1) && 
+        #ifndef NONTS
             thread_timestamp[i] > thread_timestamp[this->thid_]) {
+        #else
+            i > thid_) {
+        #endif
               thread_stats[i] = 1;
             }
           }
@@ -238,18 +258,6 @@ void TxExecutor::write(uint64_t key) {
     }
   }
 
-  /**
-   * Search tuple from data structure.
-   */
-  //Tuple *tuple;
-#if MASSTREE_USE
-  tuple = MT.get_value(key);
-#if ADD_ANALYSIS
-  ++sres_->local_tree_traversal_;
-#endif
-#else
-  //tuple = get_tuple(Table, key);
-#endif
 
 #if DLR0
   /**
@@ -262,7 +270,11 @@ void TxExecutor::write(uint64_t key) {
     if (!tuple->lock_.w_trylock()) {
       for (int i = 0; i < FLAGS_thread_num; i++) {
         if ((tuple->writers[i] == 1 || tuple->readers[i] == 1) && 
+#ifndef NONTS
         thread_timestamp[i] > thread_timestamp[this->thid_]) {
+#else
+        i > thid_) {
+#endif
           thread_stats[i] = 1;
         }
       }

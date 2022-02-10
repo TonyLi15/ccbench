@@ -31,7 +31,8 @@
 #include "include/transaction.hh"
 #include "include/util.hh"
 
-// #define NONTS
+// #define BAMBOO
+#define NONTS
 // #define PRINTF
 
 #ifndef NONTS
@@ -51,6 +52,7 @@ void worker(size_t thid, char &ready, const bool &start, const bool &quit)
   TxExecutor trans(thid, (Result *)&myres);
   FastZipf zipf(&rnd, FLAGS_zipf_skew, FLAGS_tuple_num);
   Backoff backoff(FLAGS_clocks_per_us);
+  int op_counter;
 
 #if MASSTREE_USE
   MasstreeWrapper<Tuple>::thread_init(int(thid));
@@ -73,6 +75,9 @@ void worker(size_t thid, char &ready, const bool &start, const bool &quit)
   RETRY:
     thread_stats[thid] = 0;
     commit_semaphore[thid] = 0;
+#ifdef BAMBOO
+    op_counter = 0;
+#endif
 #ifndef NONTS
     thread_timestamp[thid] = __atomic_add_fetch(&central_timestamp, 1, __ATOMIC_SEQ_CST);
 #endif
@@ -93,6 +98,9 @@ void worker(size_t thid, char &ready, const bool &start, const bool &quit)
 #ifdef PRINTF
         printf("tx%d read tup %d\n", thid, (*itr).key_);
 #endif
+#ifdef BAMBOO
+        op_counter++;
+#endif
         trans.read((*itr).key_);
       }
       else if ((*itr).ope_ == Ope::WRITE)
@@ -100,25 +108,32 @@ void worker(size_t thid, char &ready, const bool &start, const bool &quit)
 #ifdef PRINTF
         printf("tx%d write tup %d\n", thid, (*itr).key_);
 #endif
-        trans.write((*itr).key_);
+#ifdef BAMBOO
+        op_counter++;
+        if (op_counter > 5)
+          trans.write((*itr).key_, false);
+        else
+#endif
+          trans.write((*itr).key_, true);
       }
       else if ((*itr).ope_ == Ope::READ_MODIFY_WRITE)
       {
-        trans.readWrite((*itr).key_);
+#ifdef BAMBOO
+        op_counter++;
+        if (op_counter > 5)
+          trans.readWrite((*itr).key_, false);
+        else
+#endif
+          trans.readWrite((*itr).key_, true);
       }
       else
       {
         ERR;
       }
 
-      if (thread_stats[thid] == 1)
-      {                                  
-        trans.status_ = TransactionStatus::aborted;
-        trans.abort();                             
-        goto RETRY;                                
-      }                                            
-      if (trans.status_ == TransactionStatus::aborted)
+      if (thread_stats[thid] == 1 || trans.status_ == TransactionStatus::aborted)
       {
+        trans.status_ = TransactionStatus::aborted;
         trans.abort();
         goto RETRY;
       }
@@ -126,6 +141,7 @@ void worker(size_t thid, char &ready, const bool &start, const bool &quit)
 #ifdef PRINTF
     int count = 0;
 #endif
+#ifdef BAMBOO
     while (commit_semaphore[thid] > 0 && thread_stats[thid] == 0)
     {
       usleep(1);
@@ -139,11 +155,12 @@ void worker(size_t thid, char &ready, const bool &start, const bool &quit)
       }
 #endif
     }
-    if (thread_stats[thid] == 1)
-    {                                 
-      trans.status_ = TransactionStatus::aborted; 
-      trans.abort();                              
-      goto RETRY;                                 
+#endif
+    if (thread_stats[thid] == 1 || trans.status_ == TransactionStatus::aborted)
+    {
+      trans.status_ = TransactionStatus::aborted;
+      trans.abort();
+      goto RETRY;
     }
     trans.commit();
     /**
@@ -166,10 +183,11 @@ try
   makeDB();
   printf("Bamboo\n");
   for (int i = 0; i < FLAGS_thread_num; i++)
-  {                          //*** added by tatsu
-    thread_stats[i] = 0;     //*** added by tatsu
-    thread_timestamp[i] = 0; //*** added by tatsu
-  }                          //*** added by tatsu
+  {                         
+    thread_stats[i] = 0;    
+    thread_timestamp[i] = 0;
+    commit_semaphore[i] = 0;
+  }                      
   alignas(CACHE_LINE_SIZE) bool start = false;
   alignas(CACHE_LINE_SIZE) bool quit = false;
   initResult();

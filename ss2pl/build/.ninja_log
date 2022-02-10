@@ -1,0 +1,8 @@
+# ninja log v5
+0	343	1643947356	CMakeFiles/ss2pl.exe.dir/home/tatsu/non-wait/ccbench/common/result.cc.o	9aa9f532917fea49
+0	498	1643947356	CMakeFiles/ss2pl.exe.dir/home/tatsu/non-wait/ccbench/common/util.cc.o	6fb2425991eb2bbc
+1	669	1643947357	CMakeFiles/ss2pl.exe.dir/result.cc.o	169028b1de7db697
+1	970	1643947357	CMakeFiles/ss2pl.exe.dir/transaction.cc.o	2571ca8fc4e5dcdb
+0	1041	1643947357	CMakeFiles/ss2pl.exe.dir/ss2pl.cc.o	91f6d695828c8555
+2	1136	1643947357	CMakeFiles/ss2pl.exe.dir/util.cc.o	ca195c8ee3dffe21
+1136	1213	1643947357	ss2pl.exe	2ea1fa062cf0096

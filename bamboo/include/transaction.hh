@@ -21,8 +21,6 @@ extern void writeValGenerator(char *writeVal, size_t val_size, size_t thid);
 class TxExecutor {
 public:
   alignas(CACHE_LINE_SIZE) int thid_;
-  std::vector<RWLock *> r_lock_list_;
-  std::vector<RWLock *> w_lock_list_;
   TransactionStatus status_ = TransactionStatus::inFlight;
   Result *sres_;
   vector <SetElement<Tuple>> read_set_;
@@ -36,8 +34,6 @@ public:
     read_set_.reserve(FLAGS_max_ope);
     write_set_.reserve(FLAGS_max_ope);
     pro_set_.reserve(FLAGS_max_ope);
-    r_lock_list_.reserve(FLAGS_max_ope);
-    w_lock_list_.reserve(FLAGS_max_ope);
 
     genStringRepeatedNumber(write_val_, VAL_SIZE, thid);
   }
@@ -50,9 +46,9 @@ public:
 
   void read(uint64_t key);
 
-  void write(uint64_t key);
+  void write(uint64_t key, bool should_retire);
 
-  void readWrite(uint64_t key);
+  void readWrite(uint64_t key, bool should_retire);
 
   void commit();
 
@@ -67,21 +63,21 @@ public:
 
   template<typename T> void checkWound(T &list, LockType lock_type, Tuple *tuple);
 
-  void PromoteWaiters(uint64_t key);
+  void PromoteWaiters(Tuple *tuple);
 
-  void LockAcquire(uint64_t key, LockType lock_type);
+  void LockAcquire(Tuple *tuple, LockType lock_type);
 
-  void LockRelease(uint64_t key, bool is_abort);
+  void LockRelease(Tuple *tuple, bool is_abort);
 
-  void LockRetire(uint64_t key);
+  void LockRetire(Tuple *tuple);
 
-  bool spinWait(uint64_t key);
+  bool spinWait(Tuple *tuple);
 
-  bool lockUpgrade(uint64_t key);
+  bool lockUpgrade(Tuple *tuple);
 
   void checkLists(uint64_t key);
 
-  void eraseFromLists(uint64_t key); // erase txn from waiters and owners lists in case of abort during spinwait
-  
-  bool woundSuccess(uint64_t key, const int killer, const LockType my_type);
+  void eraseFromLists(Tuple *tuple); // erase txn from waiters and owners lists in case of abort during spinwait
+
+  bool woundSuccess(Tuple *tuple, const int killer, const LockType my_type);
 };

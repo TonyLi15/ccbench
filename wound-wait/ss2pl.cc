@@ -31,7 +31,11 @@
 #include "include/transaction.hh"
 #include "include/util.hh"
 
+// #define NONTS
+
+#ifndef NONTS
 long long int central_timestamp = 0; //*** added by tatsu
+#endif
 
 void worker(size_t thid, char &ready, const bool &start, const bool &quit) {
   Result &myres = std::ref(SS2PLResult[thid]);
@@ -59,7 +63,9 @@ void worker(size_t thid, char &ready, const bool &start, const bool &quit) {
                   FLAGS_rratio, FLAGS_rmw, FLAGS_ycsb, false, thid, myres);
 RETRY:
     thread_stats[thid] = 0; //*** added by tatsu
+#ifndef NONTS
     thread_timestamp[thid] = __atomic_add_fetch(&central_timestamp, 1, __ATOMIC_SEQ_CST); //*** added by tatsu
+#endif
     if (loadAcquire(quit)) break;
     if (thid == 0) leaderBackoffWork(backoff, SS2PLResult);
 

@@ -1,0 +1,22 @@
+# ninja log v5
+0	355	1643598105	CMakeFiles/ss2pl.exe.dir/home/tatsu/non-wait/ccbench/common/result.cc.o	9aa9f532917fea49
+0	482	1643598105	CMakeFiles/ss2pl.exe.dir/home/tatsu/non-wait/ccbench/common/util.cc.o	6fb2425991eb2bbc
+1	643	1643598106	CMakeFiles/ss2pl.exe.dir/result.cc.o	169028b1de7db697
+2	992	1643598106	CMakeFiles/ss2pl.exe.dir/transaction.cc.o	2571ca8fc4e5dcdb
+1	1105	1643598106	CMakeFiles/ss2pl.exe.dir/ss2pl.cc.o	91f6d695828c8555
+2	1144	1643598106	CMakeFiles/ss2pl.exe.dir/util.cc.o	ca195c8ee3dffe21
+1144	1218	1643598106	ss2pl.exe	2ea1fa062cf0096
+2	988	1643598154	CMakeFiles/ss2pl.exe.dir/transaction.cc.o	2571ca8fc4e5dcdb
+988	1062	1643598154	ss2pl.exe	2ea1fa062cf0096
+3	995	1643598576	CMakeFiles/ss2pl.exe.dir/transaction.cc.o	2571ca8fc4e5dcdb
+2	1036	1643598576	CMakeFiles/ss2pl.exe.dir/ss2pl.cc.o	91f6d695828c8555
+1036	1112	1643598576	ss2pl.exe	2ea1fa062cf0096
+3	991	1643598932	CMakeFiles/ss2pl.exe.dir/transaction.cc.o	2571ca8fc4e5dcdb
+2	1035	1643598932	CMakeFiles/ss2pl.exe.dir/ss2pl.cc.o	91f6d695828c8555
+1036	1110	1643598932	ss2pl.exe	2ea1fa062cf0096
+3	1031	1643947112	CMakeFiles/ss2pl.exe.dir/transaction.cc.o	2571ca8fc4e5dcdb
+3	1098	1643947112	CMakeFiles/ss2pl.exe.dir/ss2pl.cc.o	91f6d695828c8555
+1099	1176	1643947112	ss2pl.exe	2ea1fa062cf0096
+2	1004	1643947213	CMakeFiles/ss2pl.exe.dir/transaction.cc.o	2571ca8fc4e5dcdb
+2	1104	1643947213	CMakeFiles/ss2pl.exe.dir/ss2pl.cc.o	91f6d695828c8555
+1104	1181	1643947213	ss2pl.exe	2ea1fa062cf0096
