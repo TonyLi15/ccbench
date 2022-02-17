@@ -1,0 +1,7 @@
+[1/7] Building CXX object CMakeFiles/ss2pl.exe.dir/home/tatsu/non-wait/ccbench/common/result.cc.o
+[2/7] Building CXX object CMakeFiles/ss2pl.exe.dir/home/tatsu/non-wait/ccbench/common/util.cc.o
+[3/7] Building CXX object CMakeFiles/ss2pl.exe.dir/result.cc.o
+[4/7] Building CXX object CMakeFiles/ss2pl.exe.dir/ss2pl.cc.o
+[5/7] Building CXX object CMakeFiles/ss2pl.exe.dir/util.cc.o
+[6/7] Building CXX object CMakeFiles/ss2pl.exe.dir/transaction.cc.o
+[7/7] Linking CXX executable ss2pl.exe

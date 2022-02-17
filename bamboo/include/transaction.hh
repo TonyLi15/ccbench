@@ -61,23 +61,27 @@ public:
 
   bool conflict(LockType x, LockType y);
 
-  template<typename T> void checkWound(T &list, LockType lock_type, Tuple *tuple);
+  void checkWound(vector<int> &list, LockType lock_type, Tuple *tuple, uint64_t key);
 
   void PromoteWaiters(Tuple *tuple);
 
-  void LockAcquire(Tuple *tuple, LockType lock_type);
+  void LockAcquire(Tuple *tuple, LockType lock_type, uint64_t key);
 
-  void LockRelease(Tuple *tuple, bool is_abort);
+  void LockRelease(Tuple *tuple, bool is_abort, uint64_t key);
 
-  void LockRetire(Tuple *tuple);
+  void LockRetire(Tuple *tuple, uint64_t key);
 
-  bool spinWait(Tuple *tuple);
+  bool spinWait(Tuple *tuple, uint64_t key);
 
-  bool lockUpgrade(Tuple *tuple);
+  bool lockUpgrade(Tuple *tuple, uint64_t key);
 
   void checkLists(uint64_t key);
 
   void eraseFromLists(Tuple *tuple); // erase txn from waiters and owners lists in case of abort during spinwait
 
   bool woundSuccess(Tuple *tuple, const int killer, const LockType my_type);
+
+  void woundRelease(int txn, Tuple *tuple, uint64_t key);
+  
+  void cascadeAbort(int txn, vector<int> all_owners, Tuple *tuple, uint64_t key);
 };

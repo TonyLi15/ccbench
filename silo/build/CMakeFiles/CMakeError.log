@@ -1,0 +1,41 @@
+Determining if the pthread_create exist failed with the following output:
+Change Dir: /home/tatsu/non-wait/ccbench/silo/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/ninja" "cmTC_19631"
+[1/2] Building CXX object CMakeFiles/cmTC_19631.dir/CheckSymbolExists.cxx.o
+[2/2] Linking CXX executable cmTC_19631
+FAILED: cmTC_19631 
+: && /usr/bin/c++     CMakeFiles/cmTC_19631.dir/CheckSymbolExists.cxx.o  -o cmTC_19631   && :
+CMakeFiles/cmTC_19631.dir/CheckSymbolExists.cxx.o: 関数 `main' 内:
+CheckSymbolExists.cxx:(.text+0x1b): `pthread_create' に対する定義されていない参照です
+collect2: error: ld returned 1 exit status
+ninja: build stopped: subcommand failed.
+
+File /home/tatsu/non-wait/ccbench/silo/build/CMakeFiles/CMakeTmp/CheckSymbolExists.cxx:
+/* */
+#include <pthread.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef pthread_create
+  return ((int*)(&pthread_create))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+
+Determining if the function pthread_create exists in the pthreads failed with the following output:
+Change Dir: /home/tatsu/non-wait/ccbench/silo/build/CMakeFiles/CMakeTmp
+
+Run Build Command:"/usr/bin/ninja" "cmTC_626c7"
+[1/2] Building CXX object CMakeFiles/cmTC_626c7.dir/CheckFunctionExists.cxx.o
+[2/2] Linking CXX executable cmTC_626c7
+FAILED: cmTC_626c7 
+: && /usr/bin/c++  -DCHECK_FUNCTION_EXISTS=pthread_create   CMakeFiles/cmTC_626c7.dir/CheckFunctionExists.cxx.o  -o cmTC_626c7  -lpthreads && :
+/usr/bin/ld: -lpthreads が見つかりません
+collect2: error: ld returned 1 exit status
+ninja: build stopped: subcommand failed.
+
+

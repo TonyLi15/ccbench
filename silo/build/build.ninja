@@ -11,7 +11,7 @@
 # =============================================================================
 
 # =============================================================================
-# Project: ccbench_ss2pl
+# Project: ccbench_silo
 # Configuration: Release
 # =============================================================================
 
@@ -34,80 +34,109 @@ include rules.ninja
 # Utility command for rebuild_cache
 
 build CMakeFiles/rebuild_cache.util: CUSTOM_COMMAND
-  COMMAND = cd /home/tatsu/non-wait/ccbench/bamboo/build && /usr/bin/cmake -H/home/tatsu/non-wait/ccbench/bamboo -B/home/tatsu/non-wait/ccbench/bamboo/build
+  COMMAND = cd /home/tatsu/non-wait/ccbench/silo/build && /usr/bin/cmake -H/home/tatsu/non-wait/ccbench/silo -B/home/tatsu/non-wait/ccbench/silo/build
   DESC = Running CMake to regenerate build system...
   pool = console
   restat = 1
 build rebuild_cache: phony CMakeFiles/rebuild_cache.util
-# =============================================================================
-# Object build statements for EXECUTABLE target ss2pl.exe
-
-
-#############################################
-# Order-only phony target for ss2pl.exe
-
-build cmake_object_order_depends_target_ss2pl.exe: phony
-build CMakeFiles/ss2pl.exe.dir/home/tatsu/non-wait/ccbench/common/result.cc.o: CXX_COMPILER__ss2pl.2eexe /home/tatsu/non-wait/ccbench/common/result.cc || cmake_object_order_depends_target_ss2pl.exe
-  DEFINES = -DADD_ANALYSIS=0 -DBACK_OFF=0 -DDLR1 -DKEY_SIZE=8 -DKEY_SORT=0 -DMASSTREE_USE=1 -DVAL_SIZE="10*100"
-  DEP_FILE = CMakeFiles/ss2pl.exe.dir/home/tatsu/non-wait/ccbench/common/result.cc.o.d
-  FLAGS = -O3 -DNDEBUG   -std=c++1z
-  OBJECT_DIR = CMakeFiles/ss2pl.exe.dir
-  OBJECT_FILE_DIR = CMakeFiles/ss2pl.exe.dir/home/tatsu/non-wait/ccbench/common
-build CMakeFiles/ss2pl.exe.dir/home/tatsu/non-wait/ccbench/common/util.cc.o: CXX_COMPILER__ss2pl.2eexe /home/tatsu/non-wait/ccbench/common/util.cc || cmake_object_order_depends_target_ss2pl.exe
-  DEFINES = -DADD_ANALYSIS=0 -DBACK_OFF=0 -DDLR1 -DKEY_SIZE=8 -DKEY_SORT=0 -DMASSTREE_USE=1 -DVAL_SIZE="10*100"
-  DEP_FILE = CMakeFiles/ss2pl.exe.dir/home/tatsu/non-wait/ccbench/common/util.cc.o.d
-  FLAGS = -O3 -DNDEBUG   -std=c++1z
-  OBJECT_DIR = CMakeFiles/ss2pl.exe.dir
-  OBJECT_FILE_DIR = CMakeFiles/ss2pl.exe.dir/home/tatsu/non-wait/ccbench/common
-build CMakeFiles/ss2pl.exe.dir/ss2pl.cc.o: CXX_COMPILER__ss2pl.2eexe ../ss2pl.cc || cmake_object_order_depends_target_ss2pl.exe
-  DEFINES = -DADD_ANALYSIS=0 -DBACK_OFF=0 -DDLR1 -DKEY_SIZE=8 -DKEY_SORT=0 -DMASSTREE_USE=1 -DVAL_SIZE="10*100"
-  DEP_FILE = CMakeFiles/ss2pl.exe.dir/ss2pl.cc.o.d
-  FLAGS = -O3 -DNDEBUG   -std=c++1z
-  OBJECT_DIR = CMakeFiles/ss2pl.exe.dir
-  OBJECT_FILE_DIR = CMakeFiles/ss2pl.exe.dir
-build CMakeFiles/ss2pl.exe.dir/result.cc.o: CXX_COMPILER__ss2pl.2eexe ../result.cc || cmake_object_order_depends_target_ss2pl.exe
-  DEFINES = -DADD_ANALYSIS=0 -DBACK_OFF=0 -DDLR1 -DKEY_SIZE=8 -DKEY_SORT=0 -DMASSTREE_USE=1 -DVAL_SIZE="10*100"
-  DEP_FILE = CMakeFiles/ss2pl.exe.dir/result.cc.o.d
-  FLAGS = -O3 -DNDEBUG   -std=c++1z
-  OBJECT_DIR = CMakeFiles/ss2pl.exe.dir
-  OBJECT_FILE_DIR = CMakeFiles/ss2pl.exe.dir
-build CMakeFiles/ss2pl.exe.dir/transaction.cc.o: CXX_COMPILER__ss2pl.2eexe ../transaction.cc || cmake_object_order_depends_target_ss2pl.exe
-  DEFINES = -DADD_ANALYSIS=0 -DBACK_OFF=0 -DDLR1 -DKEY_SIZE=8 -DKEY_SORT=0 -DMASSTREE_USE=1 -DVAL_SIZE="10*100"
-  DEP_FILE = CMakeFiles/ss2pl.exe.dir/transaction.cc.o.d
-  FLAGS = -O3 -DNDEBUG   -std=c++1z
-  OBJECT_DIR = CMakeFiles/ss2pl.exe.dir
-  OBJECT_FILE_DIR = CMakeFiles/ss2pl.exe.dir
-build CMakeFiles/ss2pl.exe.dir/util.cc.o: CXX_COMPILER__ss2pl.2eexe ../util.cc || cmake_object_order_depends_target_ss2pl.exe
-  DEFINES = -DADD_ANALYSIS=0 -DBACK_OFF=0 -DDLR1 -DKEY_SIZE=8 -DKEY_SORT=0 -DMASSTREE_USE=1 -DVAL_SIZE="10*100"
-  DEP_FILE = CMakeFiles/ss2pl.exe.dir/util.cc.o.d
-  FLAGS = -O3 -DNDEBUG   -std=c++1z
-  OBJECT_DIR = CMakeFiles/ss2pl.exe.dir
-  OBJECT_FILE_DIR = CMakeFiles/ss2pl.exe.dir
-
-# =============================================================================
-# Link build statements for EXECUTABLE target ss2pl.exe
-
-
-#############################################
-# Link the executable ss2pl.exe
-
-build ss2pl.exe: CXX_EXECUTABLE_LINKER__ss2pl.2eexe CMakeFiles/ss2pl.exe.dir/home/tatsu/non-wait/ccbench/common/result.cc.o CMakeFiles/ss2pl.exe.dir/home/tatsu/non-wait/ccbench/common/util.cc.o CMakeFiles/ss2pl.exe.dir/ss2pl.cc.o CMakeFiles/ss2pl.exe.dir/result.cc.o CMakeFiles/ss2pl.exe.dir/transaction.cc.o CMakeFiles/ss2pl.exe.dir/util.cc.o | /usr/lib/x86_64-linux-gnu/libboost_filesystem.so /usr/lib/x86_64-linux-gnu/libgflags.so ../../third_party/mimalloc/out/release/libmimalloc.a ../../third_party/masstree/libkohler_masstree_json.a /usr/lib/x86_64-linux-gnu/libboost_system.so
-  FLAGS = -O3 -DNDEBUG
-  LINK_LIBRARIES = /usr/lib/x86_64-linux-gnu/libboost_filesystem.so /usr/lib/x86_64-linux-gnu/libgflags.so ../../third_party/mimalloc/out/release/libmimalloc.a ../../third_party/masstree/libkohler_masstree_json.a /usr/lib/x86_64-linux-gnu/libboost_system.so -lpthread
-  OBJECT_DIR = CMakeFiles/ss2pl.exe.dir
-  POST_BUILD = :
-  PRE_LINK = :
-  TARGET_FILE = ss2pl.exe
-  TARGET_PDB = ss2pl.exe.dbg
 
 #############################################
 # Utility command for edit_cache
 
 build CMakeFiles/edit_cache.util: CUSTOM_COMMAND
-  COMMAND = cd /home/tatsu/non-wait/ccbench/bamboo/build && /usr/bin/cmake -E echo No\ interactive\ CMake\ dialog\ available.
+  COMMAND = cd /home/tatsu/non-wait/ccbench/silo/build && /usr/bin/cmake -E echo No\ interactive\ CMake\ dialog\ available.
   DESC = No interactive CMake dialog available...
   restat = 1
 build edit_cache: phony CMakeFiles/edit_cache.util
+# =============================================================================
+# Object build statements for EXECUTABLE target silo.exe
+
+
+#############################################
+# Order-only phony target for silo.exe
+
+build cmake_object_order_depends_target_silo.exe: phony
+build CMakeFiles/silo.exe.dir/home/tatsu/non-wait/ccbench/common/result.cc.o: CXX_COMPILER__silo.2eexe /home/tatsu/non-wait/ccbench/common/result.cc || cmake_object_order_depends_target_silo.exe
+  DEFINES = -DADD_ANALYSIS=0 -DBACK_OFF=0 -DKEY_SIZE=8 -DMASSTREE_USE=1 -DNO_WAIT_LOCKING_IN_VALIDATION=1 -DNO_WAIT_OF_TICTOC=0 -DPARTITION_TABLE=0 -DPROCEDURE_SORT=0 -DSLEEP_READ_PHASE=0 -DVAL_SIZE="10*100" -DWAL=0
+  DEP_FILE = CMakeFiles/silo.exe.dir/home/tatsu/non-wait/ccbench/common/result.cc.o.d
+  FLAGS = -O3 -DNDEBUG   -std=c++1z
+  OBJECT_DIR = CMakeFiles/silo.exe.dir
+  OBJECT_FILE_DIR = CMakeFiles/silo.exe.dir/home/tatsu/non-wait/ccbench/common
+build CMakeFiles/silo.exe.dir/home/tatsu/non-wait/ccbench/common/util.cc.o: CXX_COMPILER__silo.2eexe /home/tatsu/non-wait/ccbench/common/util.cc || cmake_object_order_depends_target_silo.exe
+  DEFINES = -DADD_ANALYSIS=0 -DBACK_OFF=0 -DKEY_SIZE=8 -DMASSTREE_USE=1 -DNO_WAIT_LOCKING_IN_VALIDATION=1 -DNO_WAIT_OF_TICTOC=0 -DPARTITION_TABLE=0 -DPROCEDURE_SORT=0 -DSLEEP_READ_PHASE=0 -DVAL_SIZE="10*100" -DWAL=0
+  DEP_FILE = CMakeFiles/silo.exe.dir/home/tatsu/non-wait/ccbench/common/util.cc.o.d
+  FLAGS = -O3 -DNDEBUG   -std=c++1z
+  OBJECT_DIR = CMakeFiles/silo.exe.dir
+  OBJECT_FILE_DIR = CMakeFiles/silo.exe.dir/home/tatsu/non-wait/ccbench/common
+build CMakeFiles/silo.exe.dir/result.cc.o: CXX_COMPILER__silo.2eexe ../result.cc || cmake_object_order_depends_target_silo.exe
+  DEFINES = -DADD_ANALYSIS=0 -DBACK_OFF=0 -DKEY_SIZE=8 -DMASSTREE_USE=1 -DNO_WAIT_LOCKING_IN_VALIDATION=1 -DNO_WAIT_OF_TICTOC=0 -DPARTITION_TABLE=0 -DPROCEDURE_SORT=0 -DSLEEP_READ_PHASE=0 -DVAL_SIZE="10*100" -DWAL=0
+  DEP_FILE = CMakeFiles/silo.exe.dir/result.cc.o.d
+  FLAGS = -O3 -DNDEBUG   -std=c++1z
+  OBJECT_DIR = CMakeFiles/silo.exe.dir
+  OBJECT_FILE_DIR = CMakeFiles/silo.exe.dir
+build CMakeFiles/silo.exe.dir/silo.cc.o: CXX_COMPILER__silo.2eexe ../silo.cc || cmake_object_order_depends_target_silo.exe
+  DEFINES = -DADD_ANALYSIS=0 -DBACK_OFF=0 -DKEY_SIZE=8 -DMASSTREE_USE=1 -DNO_WAIT_LOCKING_IN_VALIDATION=1 -DNO_WAIT_OF_TICTOC=0 -DPARTITION_TABLE=0 -DPROCEDURE_SORT=0 -DSLEEP_READ_PHASE=0 -DVAL_SIZE="10*100" -DWAL=0
+  DEP_FILE = CMakeFiles/silo.exe.dir/silo.cc.o.d
+  FLAGS = -O3 -DNDEBUG   -std=c++1z
+  OBJECT_DIR = CMakeFiles/silo.exe.dir
+  OBJECT_FILE_DIR = CMakeFiles/silo.exe.dir
+build CMakeFiles/silo.exe.dir/transaction.cc.o: CXX_COMPILER__silo.2eexe ../transaction.cc || cmake_object_order_depends_target_silo.exe
+  DEFINES = -DADD_ANALYSIS=0 -DBACK_OFF=0 -DKEY_SIZE=8 -DMASSTREE_USE=1 -DNO_WAIT_LOCKING_IN_VALIDATION=1 -DNO_WAIT_OF_TICTOC=0 -DPARTITION_TABLE=0 -DPROCEDURE_SORT=0 -DSLEEP_READ_PHASE=0 -DVAL_SIZE="10*100" -DWAL=0
+  DEP_FILE = CMakeFiles/silo.exe.dir/transaction.cc.o.d
+  FLAGS = -O3 -DNDEBUG   -std=c++1z
+  OBJECT_DIR = CMakeFiles/silo.exe.dir
+  OBJECT_FILE_DIR = CMakeFiles/silo.exe.dir
+build CMakeFiles/silo.exe.dir/util.cc.o: CXX_COMPILER__silo.2eexe ../util.cc || cmake_object_order_depends_target_silo.exe
+  DEFINES = -DADD_ANALYSIS=0 -DBACK_OFF=0 -DKEY_SIZE=8 -DMASSTREE_USE=1 -DNO_WAIT_LOCKING_IN_VALIDATION=1 -DNO_WAIT_OF_TICTOC=0 -DPARTITION_TABLE=0 -DPROCEDURE_SORT=0 -DSLEEP_READ_PHASE=0 -DVAL_SIZE="10*100" -DWAL=0
+  DEP_FILE = CMakeFiles/silo.exe.dir/util.cc.o.d
+  FLAGS = -O3 -DNDEBUG   -std=c++1z
+  OBJECT_DIR = CMakeFiles/silo.exe.dir
+  OBJECT_FILE_DIR = CMakeFiles/silo.exe.dir
+
+# =============================================================================
+# Link build statements for EXECUTABLE target silo.exe
+
+
+#############################################
+# Link the executable silo.exe
+
+build silo.exe: CXX_EXECUTABLE_LINKER__silo.2eexe CMakeFiles/silo.exe.dir/home/tatsu/non-wait/ccbench/common/result.cc.o CMakeFiles/silo.exe.dir/home/tatsu/non-wait/ccbench/common/util.cc.o CMakeFiles/silo.exe.dir/result.cc.o CMakeFiles/silo.exe.dir/silo.cc.o CMakeFiles/silo.exe.dir/transaction.cc.o CMakeFiles/silo.exe.dir/util.cc.o | /usr/lib/x86_64-linux-gnu/libboost_filesystem.so /usr/lib/x86_64-linux-gnu/libgflags.so ../../third_party/mimalloc/out/release/libmimalloc.a ../../third_party/masstree/libkohler_masstree_json.a /usr/lib/x86_64-linux-gnu/libboost_system.so
+  FLAGS = -O3 -DNDEBUG
+  LINK_LIBRARIES = /usr/lib/x86_64-linux-gnu/libboost_filesystem.so /usr/lib/x86_64-linux-gnu/libgflags.so ../../third_party/mimalloc/out/release/libmimalloc.a ../../third_party/masstree/libkohler_masstree_json.a /usr/lib/x86_64-linux-gnu/libboost_system.so -lpthread
+  OBJECT_DIR = CMakeFiles/silo.exe.dir
+  POST_BUILD = :
+  PRE_LINK = :
+  TARGET_FILE = silo.exe
+  TARGET_PDB = silo.exe.dbg
+# =============================================================================
+# Object build statements for EXECUTABLE target replay_test.exe
+
+
+#############################################
+# Order-only phony target for replay_test.exe
+
+build cmake_object_order_depends_target_replay_test.exe: phony
+build CMakeFiles/replay_test.exe.dir/replayTest.cc.o: CXX_COMPILER__replay_test.2eexe ../replayTest.cc || cmake_object_order_depends_target_replay_test.exe
+  DEFINES = -DADD_ANALYSIS=0 -DBACK_OFF=0 -DKEY_SIZE=8 -DMASSTREE_USE=1 -DNO_WAIT_LOCKING_IN_VALIDATION=1 -DNO_WAIT_OF_TICTOC=0 -DPARTITION_TABLE=0 -DPROCEDURE_SORT=0 -DSLEEP_READ_PHASE=0 -DVAL_SIZE="10*100" -DWAL=0
+  DEP_FILE = CMakeFiles/replay_test.exe.dir/replayTest.cc.o.d
+  FLAGS = -O3 -DNDEBUG   -std=c++1z
+  OBJECT_DIR = CMakeFiles/replay_test.exe.dir
+  OBJECT_FILE_DIR = CMakeFiles/replay_test.exe.dir
+
+# =============================================================================
+# Link build statements for EXECUTABLE target replay_test.exe
+
+
+#############################################
+# Link the executable replay_test.exe
+
+build replay_test.exe: CXX_EXECUTABLE_LINKER__replay_test.2eexe CMakeFiles/replay_test.exe.dir/replayTest.cc.o
+  FLAGS = -O3 -DNDEBUG
+  OBJECT_DIR = CMakeFiles/replay_test.exe.dir
+  POST_BUILD = :
+  PRE_LINK = :
+  TARGET_FILE = replay_test.exe
+  TARGET_PDB = replay_test.exe.dbg
 # =============================================================================
 # Target aliases.
 
@@ -122,7 +151,7 @@ build edit_cache: phony CMakeFiles/edit_cache.util
 #############################################
 # The main all target.
 
-build all: phony ss2pl.exe
+build all: phony silo.exe replay_test.exe
 
 #############################################
 # Make the all target the default.

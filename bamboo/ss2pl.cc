@@ -31,7 +31,7 @@
 #include "include/transaction.hh"
 #include "include/util.hh"
 
-// #define BAMBOO
+#define BAMBOO
 #define NONTS
 // #define PRINTF
 
@@ -82,7 +82,7 @@ void worker(size_t thid, char &ready, const bool &start, const bool &quit)
     thread_timestamp[thid] = __atomic_add_fetch(&central_timestamp, 1, __ATOMIC_SEQ_CST);
 #endif
 #ifdef PRINTF
-    printf("tx%d starts: timestamp = %d\n", thid, thread_timestamp[thid]);
+    printf("tx%d starts: timestamp = %d\n", (int)thid, thread_timestamp[thid]);
 #endif
     if (loadAcquire(quit))
       break;
@@ -96,7 +96,7 @@ void worker(size_t thid, char &ready, const bool &start, const bool &quit)
       if ((*itr).ope_ == Ope::READ)
       {
 #ifdef PRINTF
-        printf("tx%d read tup %d\n", thid, (*itr).key_);
+        printf("tx%d read tup %d\n", (int)thid, (int)(*itr).key_);
 #endif
 #ifdef BAMBOO
         op_counter++;
@@ -106,11 +106,11 @@ void worker(size_t thid, char &ready, const bool &start, const bool &quit)
       else if ((*itr).ope_ == Ope::WRITE)
       {
 #ifdef PRINTF
-        printf("tx%d write tup %d\n", thid, (*itr).key_);
+        printf("tx%d write tup %d\n", (int)thid, (int)(*itr).key_);
 #endif
 #ifdef BAMBOO
         op_counter++;
-        if (op_counter > 5)
+        if (op_counter > (FLAGS_max_ope / 2))
           trans.write((*itr).key_, false);
         else
 #endif
@@ -120,7 +120,7 @@ void worker(size_t thid, char &ready, const bool &start, const bool &quit)
       {
 #ifdef BAMBOO
         op_counter++;
-        if (op_counter > 5)
+        if (op_counter > (FLAGS_max_ope / 2))
           trans.readWrite((*itr).key_, false);
         else
 #endif
@@ -145,15 +145,14 @@ void worker(size_t thid, char &ready, const bool &start, const bool &quit)
     while (commit_semaphore[thid] > 0 && thread_stats[thid] == 0)
     {
       usleep(1);
-#ifdef PRINTF
+      #ifdef PRINTF
       count++;
-      if (count % 100000 == 0)
+      if (count % 1000 == 0)
       {
         printf("TX%d WAITING TOO LONG\n", (int)thid);
-        // for (int i = 0; i < FLAGS_thread_num; i++)
-        //   printf("tx%d commit semaphore %d\n", i, commit_semaphore[i]);
+        trans.checkLists(0);
       }
-#endif
+      #endif
     }
 #endif
     if (thread_stats[thid] == 1 || trans.status_ == TransactionStatus::aborted)
@@ -183,11 +182,11 @@ try
   makeDB();
   printf("Bamboo\n");
   for (int i = 0; i < FLAGS_thread_num; i++)
-  {                         
-    thread_stats[i] = 0;    
+  {
+    thread_stats[i] = 0;
     thread_timestamp[i] = 0;
     commit_semaphore[i] = 0;
-  }                      
+  }
   alignas(CACHE_LINE_SIZE) bool start = false;
   alignas(CACHE_LINE_SIZE) bool quit = false;
   initResult();

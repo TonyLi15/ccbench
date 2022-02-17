@@ -241,6 +241,9 @@ ENABLE_SANITIZER:BOOL=ON
 //enable undefined behavior sanitizer on debug build
 ENABLE_UB_SANITIZER:BOOL=OFF
 
+//No help, variable specified on the command line.
+VAL_SIZE:UNINITIALIZED=10*100
+
 //Value Computed by CMake
 ccbench_ss2pl_BINARY_DIR:STATIC=/home/tatsu/non-wait/ccbench/wound-wait/build
 
