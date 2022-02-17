@@ -32,4 +32,5 @@ public:
   bool sortAdd(int txn, vector<int> &list);
   void ownersAdd(int txn);
   bool remove(int txn, vector<int> &list);
+  vector<int>::iterator itrRemove(int txn);
 };

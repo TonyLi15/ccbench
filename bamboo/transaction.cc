@@ -25,7 +25,7 @@ extern void display_procedure_vector(std::vector<Procedure> &pro);
 /**
  * @brief Search xxx set
  * @detail Search element of local set corresponding to given key.
- * In this prototype system, the value to be updated for each worker thread 
+ * In this prototype system, the value to be updated for each worker thread
  * is fixed for high performance, so it is only necessary to check the key match.
  * @param Key [in] the key of key-value
  * @return Corresponding element of local set
@@ -44,7 +44,7 @@ inline SetElement<Tuple> *TxExecutor::searchReadSet(uint64_t key)
 /**
  * @brief Search xxx set
  * @detail Search element of local set corresponding to given key.
- * In this prototype system, the value to be updated for each worker thread 
+ * In this prototype system, the value to be updated for each worker thread
  * is fixed for high performance, so it is only necessary to check the key match.
  * @param Key [in] the key of key-value
  * @return Corresponding element of local set
@@ -269,14 +269,14 @@ void TxExecutor::write(uint64_t key, bool should_retire)
   /**
    * Search tuple from data structure.
    */
-  //Tuple *tuple;
+  // Tuple *tuple;
 #if MASSTREE_USE
   // tuple = MT.get_value(key);
 #if ADD_ANALYSIS
   ++sres_->local_tree_traversal_;
 #endif
 #else
-  //tuple = get_tuple(Table, key);
+  // tuple = get_tuple(Table, key);
 #endif
   LockAcquire(tuple, LockType::EX, key);
   if (spinWait(tuple, key))
@@ -464,10 +464,9 @@ void TxExecutor::checkWound(vector<int> &list, LockType lock_type, Tuple *tuple,
   int t;
   bool has_conflicts = false;
   LockType type;
-  int i = 0;
-  while (list.size() > 0)
+  for (auto it = list.begin(); it != list.end();)
   {
-    t = list[i];
+    t = (*it);
     type = (LockType)tuple->req_type[t];
     if (conflict(lock_type, type))
     {
@@ -487,13 +486,12 @@ void TxExecutor::checkWound(vector<int> &list, LockType lock_type, Tuple *tuple,
       printf("tx%d wounds tx%d\n", thid_, t);
 #endif
       thread_stats[t] = 1;
-      woundRelease(t, tuple, key);
-      i = 0;
-      continue;
+      it = woundRelease(t, tuple, key);
     }
-    i++;
-    if (i >= list.size())
-      return;
+    else
+    {
+      ++it;
+    }
   }
 }
 
@@ -599,7 +597,7 @@ vector<int> concat(vector<int> r, vector<int> o)
   return c;
 }
 
-void TxExecutor::woundRelease(int txn, Tuple *tuple, uint64_t key)
+vector<int>::iterator TxExecutor::woundRelease(int txn, Tuple *tuple, uint64_t key)
 {
 #ifdef BAMBOO
   bool was_head = false;
@@ -618,12 +616,7 @@ void TxExecutor::woundRelease(int txn, Tuple *tuple, uint64_t key)
     cascadeAbort(txn, all_owners, tuple, key);
     memcpy(tuple->val_, tuple->prev_val_[txn], VAL_SIZE);
   }
-  if (tuple->remove(txn, tuple->retired) == false &&
-      tuple->remove(txn, tuple->owners) == false)
-  {
-    printf("REMOVE FAILURE: woundRelease tx%d\n", txn);
-    exit(1);
-  }
+  auto it = tuple->itrRemove(txn);
   all_owners = concat(tuple->retired, tuple->owners);
   if (all_owners.size())
   {
@@ -651,6 +644,7 @@ void TxExecutor::woundRelease(int txn, Tuple *tuple, uint64_t key)
   tuple->remove(txn, tuple->owners);
 #endif
   tuple->req_type[txn] = 0;
+  return it;
 }
 
 void TxExecutor::LockRelease(Tuple *tuple, bool is_abort, uint64_t key)
@@ -763,6 +757,30 @@ void TxExecutor::LockRetire(Tuple *tuple, uint64_t key)
       usleep(1);
     }
   }
+}
+
+vector<int>::iterator Tuple::itrRemove(int txn)
+{
+  vector<int>::iterator it;
+  int i;
+  for (i = 0; i < retired.size(); i++)
+  {
+    if (txn == retired[i])
+    {
+      it = retired.erase(retired.begin() + i);
+      return it;
+    }
+  }
+  for (i = 0; i < owners.size(); i++)
+  {
+    if (txn == owners[i])
+    {
+      it = owners.erase(owners.begin() + i);
+      return it;
+    }
+  }
+  printf("ERROR: itrRemove FAILURE\n");
+  exit(1);
 }
 
 bool Tuple::remove(int txn, vector<int> &list)

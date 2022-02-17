@@ -81,7 +81,7 @@ public:
 
   bool woundSuccess(Tuple *tuple, const int killer, const LockType my_type);
 
-  void woundRelease(int txn, Tuple *tuple, uint64_t key);
+  vector<int>::iterator woundRelease(int txn, Tuple *tuple, uint64_t key);
   
   void cascadeAbort(int txn, vector<int> all_owners, Tuple *tuple, uint64_t key);
 };
