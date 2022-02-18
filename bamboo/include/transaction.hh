@@ -84,4 +84,6 @@ public:
   vector<int>::iterator woundRelease(int txn, Tuple *tuple, uint64_t key);
   
   void cascadeAbort(int txn, vector<int> all_owners, Tuple *tuple, uint64_t key);
+
+  void addCommitSemaphore(Tuple *tuple, int t, LockType t_type);
 };

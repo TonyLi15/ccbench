@@ -48,37 +48,37 @@ build rebuild_cache: phony CMakeFiles/rebuild_cache.util
 
 build cmake_object_order_depends_target_ss2pl.exe: phony
 build CMakeFiles/ss2pl.exe.dir/home/tatsu/non-wait/ccbench/common/result.cc.o: CXX_COMPILER__ss2pl.2eexe /home/tatsu/non-wait/ccbench/common/result.cc || cmake_object_order_depends_target_ss2pl.exe
-  DEFINES = -DADD_ANALYSIS=0 -DBACK_OFF=0 -DDLR1 -DKEY_SIZE=8 -DKEY_SORT=0 -DMASSTREE_USE=1 -DVAL_SIZE="10*100"
+  DEFINES = -DADD_ANALYSIS=0 -DBACK_OFF=0 -DDLR1 -DKEY_SIZE=8 -DKEY_SORT=0 -DMASSTREE_USE=1 -DVAL_SIZE=4
   DEP_FILE = CMakeFiles/ss2pl.exe.dir/home/tatsu/non-wait/ccbench/common/result.cc.o.d
   FLAGS = -O3 -DNDEBUG   -std=c++1z
   OBJECT_DIR = CMakeFiles/ss2pl.exe.dir
   OBJECT_FILE_DIR = CMakeFiles/ss2pl.exe.dir/home/tatsu/non-wait/ccbench/common
 build CMakeFiles/ss2pl.exe.dir/home/tatsu/non-wait/ccbench/common/util.cc.o: CXX_COMPILER__ss2pl.2eexe /home/tatsu/non-wait/ccbench/common/util.cc || cmake_object_order_depends_target_ss2pl.exe
-  DEFINES = -DADD_ANALYSIS=0 -DBACK_OFF=0 -DDLR1 -DKEY_SIZE=8 -DKEY_SORT=0 -DMASSTREE_USE=1 -DVAL_SIZE="10*100"
+  DEFINES = -DADD_ANALYSIS=0 -DBACK_OFF=0 -DDLR1 -DKEY_SIZE=8 -DKEY_SORT=0 -DMASSTREE_USE=1 -DVAL_SIZE=4
   DEP_FILE = CMakeFiles/ss2pl.exe.dir/home/tatsu/non-wait/ccbench/common/util.cc.o.d
   FLAGS = -O3 -DNDEBUG   -std=c++1z
   OBJECT_DIR = CMakeFiles/ss2pl.exe.dir
   OBJECT_FILE_DIR = CMakeFiles/ss2pl.exe.dir/home/tatsu/non-wait/ccbench/common
 build CMakeFiles/ss2pl.exe.dir/ss2pl.cc.o: CXX_COMPILER__ss2pl.2eexe ../ss2pl.cc || cmake_object_order_depends_target_ss2pl.exe
-  DEFINES = -DADD_ANALYSIS=0 -DBACK_OFF=0 -DDLR1 -DKEY_SIZE=8 -DKEY_SORT=0 -DMASSTREE_USE=1 -DVAL_SIZE="10*100"
+  DEFINES = -DADD_ANALYSIS=0 -DBACK_OFF=0 -DDLR1 -DKEY_SIZE=8 -DKEY_SORT=0 -DMASSTREE_USE=1 -DVAL_SIZE=4
   DEP_FILE = CMakeFiles/ss2pl.exe.dir/ss2pl.cc.o.d
   FLAGS = -O3 -DNDEBUG   -std=c++1z
   OBJECT_DIR = CMakeFiles/ss2pl.exe.dir
   OBJECT_FILE_DIR = CMakeFiles/ss2pl.exe.dir
 build CMakeFiles/ss2pl.exe.dir/result.cc.o: CXX_COMPILER__ss2pl.2eexe ../result.cc || cmake_object_order_depends_target_ss2pl.exe
-  DEFINES = -DADD_ANALYSIS=0 -DBACK_OFF=0 -DDLR1 -DKEY_SIZE=8 -DKEY_SORT=0 -DMASSTREE_USE=1 -DVAL_SIZE="10*100"
+  DEFINES = -DADD_ANALYSIS=0 -DBACK_OFF=0 -DDLR1 -DKEY_SIZE=8 -DKEY_SORT=0 -DMASSTREE_USE=1 -DVAL_SIZE=4
   DEP_FILE = CMakeFiles/ss2pl.exe.dir/result.cc.o.d
   FLAGS = -O3 -DNDEBUG   -std=c++1z
   OBJECT_DIR = CMakeFiles/ss2pl.exe.dir
   OBJECT_FILE_DIR = CMakeFiles/ss2pl.exe.dir
 build CMakeFiles/ss2pl.exe.dir/transaction.cc.o: CXX_COMPILER__ss2pl.2eexe ../transaction.cc || cmake_object_order_depends_target_ss2pl.exe
-  DEFINES = -DADD_ANALYSIS=0 -DBACK_OFF=0 -DDLR1 -DKEY_SIZE=8 -DKEY_SORT=0 -DMASSTREE_USE=1 -DVAL_SIZE="10*100"
+  DEFINES = -DADD_ANALYSIS=0 -DBACK_OFF=0 -DDLR1 -DKEY_SIZE=8 -DKEY_SORT=0 -DMASSTREE_USE=1 -DVAL_SIZE=4
   DEP_FILE = CMakeFiles/ss2pl.exe.dir/transaction.cc.o.d
   FLAGS = -O3 -DNDEBUG   -std=c++1z
   OBJECT_DIR = CMakeFiles/ss2pl.exe.dir
   OBJECT_FILE_DIR = CMakeFiles/ss2pl.exe.dir
 build CMakeFiles/ss2pl.exe.dir/util.cc.o: CXX_COMPILER__ss2pl.2eexe ../util.cc || cmake_object_order_depends_target_ss2pl.exe
-  DEFINES = -DADD_ANALYSIS=0 -DBACK_OFF=0 -DDLR1 -DKEY_SIZE=8 -DKEY_SORT=0 -DMASSTREE_USE=1 -DVAL_SIZE="10*100"
+  DEFINES = -DADD_ANALYSIS=0 -DBACK_OFF=0 -DDLR1 -DKEY_SIZE=8 -DKEY_SORT=0 -DMASSTREE_USE=1 -DVAL_SIZE=4
   DEP_FILE = CMakeFiles/ss2pl.exe.dir/util.cc.o.d
   FLAGS = -O3 -DNDEBUG   -std=c++1z
   OBJECT_DIR = CMakeFiles/ss2pl.exe.dir

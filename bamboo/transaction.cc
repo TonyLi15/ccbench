@@ -15,10 +15,109 @@
 // #define PRINTF
 #define BAMBOO
 #define NONTS
-// #define OPT1
+#define OPT1
 // #define NOUPGRADE
 
 using namespace std;
+
+int myBinarySearch(vector<int> &x, int goal, int tail)
+{
+  int head = 0;
+  tail = tail - 1;
+#ifdef NONTS
+  while (1)
+  {
+    int search_key = floor((head + tail) / 2);
+    if (x[search_key] == goal)
+    {
+      return search_key;
+    }
+    else if (goal > x[search_key])
+    {
+      head = search_key + 1;
+    }
+    else if (goal < x[search_key])
+    {
+      tail = search_key - 1;
+    }
+    if (tail < head)
+    {
+      return -1;
+    }
+  }
+#else
+  while (1)
+  {
+    int search_key = floor((head + tail) / 2);
+    if (thread_timestamp[x[search_key]] == thread_timestamp[goal])
+    {
+      return search_key;
+    }
+    else if (thread_timestamp[goal] > thread_timestamp[x[search_key]])
+    {
+      head = search_key + 1;
+    }
+    else if (thread_timestamp[goal] < thread_timestamp[x[search_key]])
+    {
+      tail = search_key - 1;
+    }
+    if (tail < head)
+    {
+      return -1;
+    }
+  }
+#endif
+}
+int myBinaryInsert(vector<int> &x, int goal, int tail)
+{
+  int head = 0;
+  tail = tail - 1;
+#ifdef NONTS
+  while (1)
+  {
+    int search_key = floor((head + tail) / 2);
+    if (x[search_key] == goal)
+    {
+      printf("ERROR: myBinaryInsert\n");
+      exit(1);
+    }
+    else if (goal > x[search_key])
+    {
+      head = search_key + 1;
+    }
+    else if (goal < x[search_key])
+    {
+      tail = search_key - 1;
+    }
+    if (tail < head)
+    {
+      return head;
+    }
+  }
+#else
+  while (1)
+  {
+    int search_key = floor((head + tail) / 2);
+    if (thread_timestamp[x[search_key]] == thread_timestamp[goal])
+    {
+      printf("ERROR: myBinaryInsert\n");
+      exit(1);
+    }
+    else if (thread_timestamp[goal] > thread_timestamp[x[search_key]])
+    {
+      head = search_key + 1;
+    }
+    else if (thread_timestamp[goal] < thread_timestamp[x[search_key]])
+    {
+      tail = search_key - 1;
+    }
+    if (tail < head)
+    {
+      return head;
+    }
+  }
+#endif
+}
 
 extern void display_procedure_vector(std::vector<Procedure> &pro);
 
@@ -407,6 +506,27 @@ bool TxExecutor::conflict(LockType x, LockType y)
     return false;
 }
 
+void TxExecutor::addCommitSemaphore(Tuple *tuple, int t, LockType t_type)
+{
+  int r;
+  LockType retired_type;
+  for (int i = 0; i < tuple->retired.size(); i++)
+  {
+    r = tuple->retired[i];
+    retired_type = (LockType)tuple->req_type[r];
+#ifndef NONTS
+    if (thread_timestamp[t] > thread_timestamp[r] &&
+#else
+    if (t > r &&
+#endif
+        conflict(t_type, retired_type))
+    {
+      __atomic_add_fetch(&commit_semaphore[t], 1, __ATOMIC_SEQ_CST);
+      break;
+    }
+  }
+}
+
 void TxExecutor::PromoteWaiters(Tuple *tuple)
 {
 #ifdef PRINTF
@@ -440,21 +560,7 @@ void TxExecutor::PromoteWaiters(Tuple *tuple)
     tuple->remove(t, tuple->waiters);
     tuple->ownersAdd(t);
 #ifdef BAMBOO
-    for (int i = 0; i < tuple->retired.size(); i++)
-    {
-      r = tuple->retired[i];
-      retired_type = (LockType)tuple->req_type[r];
-#ifndef NONTS
-      if (thread_timestamp[t] > thread_timestamp[r] &&
-#else
-      if (t > r &&
-#endif
-          conflict(t_type, retired_type))
-      {
-        __atomic_add_fetch(&commit_semaphore[t], 1, __ATOMIC_SEQ_CST);
-        break;
-      }
-    }
+  addCommitSemaphore(tuple, t, t_type);
 #endif
   }
 }
@@ -525,26 +631,10 @@ void TxExecutor::LockAcquire(Tuple *tuple, LockType lock_type, uint64_t key)
           (owner_exists == false || conflict(lock_type, owners_type) == false))
       {
         tuple->ownersAdd(thid_);
-        for (int i = 0; i < tuple->retired.size(); i++)
-        {
-          if (thread_timestamp[thid_] > thread_timestamp[tuple->retired[i]] &&
-              conflict(lock_type, (LockType)tuple->req_type[tuple->retired[i]]))
-          {
-            commit_semaphore[thid_]++;
-#ifdef PRINTF
-            printf("tx%d locktype %d, tx%d locktype %d\n", thid_, lock_type, tuple->retired[i], tuple->req_type[tuple->retired[i]]);
-            printf("tx%d lock type %d commit semaphore %d\n", thid_, lock_type, commit_semaphore[thid_]);
-            // checkLists(key);
-#endif
-            break;
-          }
-        }
+        addCommitSemaphore(tuple, thid_, lock_type);
       }
       else
       {
-#ifdef PRINTF
-        printf("tx%d added to waiter list\n", thid_);
-#endif
         tuple->sortAdd(thid_, tuple->waiters);
       }
 #endif
@@ -577,7 +667,7 @@ void TxExecutor::cascadeAbort(int txn, vector<int> all_owners, Tuple *tuple, uin
         // printf("tx%d cascade abort tx %d\n", txn, all_owners[j]);
 #endif
         if (tuple->remove(t, tuple->retired) == false &&
-            tuple->remove(t, tuple->owners) == false)
+            tuple->ownersRemove(t) == false)
         {
           printf("REMOVE FAILURE: tx%d cascade abort tx%d ts%d\n", txn, t, thread_timestamp[t]);
           checkLists(key);
@@ -681,7 +771,7 @@ void TxExecutor::LockRelease(Tuple *tuple, bool is_abort, uint64_t key)
         // checkLists(key);
       }
       if (tuple->remove(thid_, tuple->retired) == false &&
-          tuple->remove(thid_, tuple->owners) == false)
+          tuple->ownersRemove(thid_) == false)
       {
         printf("REMOVE FAILURE: LockRelease tx%d\n", thid_);
         exit(1);
@@ -744,7 +834,7 @@ void TxExecutor::LockRetire(Tuple *tuple, uint64_t key)
 #ifdef PRINTF
       printf("tx%d lockRetire tuple %d\n", thid_, key);
 #endif
-      tuple->remove(thid_, tuple->owners);
+      tuple->ownersRemove(thid_);
       tuple->sortAdd(thid_, tuple->retired);
       PromoteWaiters(tuple);
       tuple->lock_.w_unlock();
@@ -783,35 +873,83 @@ vector<int>::iterator Tuple::itrRemove(int txn)
   exit(1);
 }
 
-bool Tuple::remove(int txn, vector<int> &list)
+bool Tuple::ownersRemove(int txn)
 {
-  for (int i = 0; i < list.size(); i++)
+  for (int i = 0; i < owners.size(); i++)
   {
-    if (txn == list[i])
+    if (txn == owners[i])
     {
-      list.erase(list.begin() + i);
+      owners.erase(owners.begin() + i);
       return true;
     }
   }
   return false;
 }
 
+bool Tuple::remove(int txn, vector<int> &list)
+{
+  if (list.size() == 0)
+    return false;
+  int i = myBinarySearch(list, txn, list.size());
+  if (i == -1)
+    return false;
+  assert(txn == *(list.begin() + i));
+  list.erase(list.begin() + i);
+  return true;
+  // for (int i = 0; i < list.size(); i++)
+  // {
+  //   if (txn == list[i])
+  //   {
+  //     list.erase(list.begin() + i);
+  //     return true;
+  //   }
+  // }
+  // return false;
+}
+
 bool Tuple::sortAdd(int txn, vector<int> &list)
 {
-  for (auto tid = list.begin(); tid != list.end(); tid++)
-  { // reverse_iterator might be better
-#ifndef NONTS
-    if (thread_timestamp[txn] < thread_timestamp[(*tid)])
-#else
-    if (txn < (*tid))
-#endif
-    {
-      list.insert(tid, txn);
-      return true;
-    }
+  if (list.size() == 0)
+  {
+    list.push_back(txn);
+    return true;
   }
-  list.push_back(txn);
+  int i = myBinaryInsert(list, txn, list.size());
+#ifndef NONTS
+  assert(thread_timestamp[*(list.begin() + i)] > thread_timestamp[txn] &&
+         thread_timestamp[*(list.begin() + i - 1)] < thread_timestamp[txn]);
+#else
+  assert(*(list.begin() + i) > txn && *(list.begin() + i - 1) < txn);
+#endif
+  list.insert(list.begin() + i, txn);
   return true;
+  //   for (auto tid = list.begin(); tid != list.end(); tid++)
+  //   { // reverse_iterator might be better
+  // #ifndef NONTS
+  //     if (thread_timestamp[txn] < thread_timestamp[(*tid)])
+  // #else
+  //     if (txn < (*tid))
+  // #endif
+  //     {
+  //       list.insert(tid, txn);
+  //       return true;
+  //     }
+  //   }
+  //   list.push_back(txn);
+  //   return true;
+  //   for (auto tid = list.rbegin(); tid != list.rend(); tid++)
+  //   { // reverse_iterator
+  // #ifndef NONTS
+  //     if (thread_timestamp[txn] > thread_timestamp[(*tid)])
+  // #else
+  //     if (txn > (*tid))
+  // #endif
+  //     {
+  //       list.insert(tid.base(), txn);
+  //       break;
+  //     }
+  //   }
+  //   list.insert(list.begin(), txn);
 }
 
 bool TxExecutor::spinWait(Tuple *tuple, uint64_t key)

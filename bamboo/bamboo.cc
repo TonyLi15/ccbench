@@ -509,7 +509,7 @@ vector<int> concat(vector<int> r, vector<int> o)
   return c;
 }
 
-void TxExecutor::woundRelease(int txn, Tuple *tuple, uint64_t key)
+vector<int>::iterator TxExecutor::woundRelease(int txn, Tuple *tuple, uint64_t key)
 {
 #ifdef BAMBOO
   bool was_head = false;
@@ -677,6 +677,19 @@ bool Tuple::sortAdd(int txn, vector<int> &list)
   }
   list.push_back(txn);
   return true;
+  //   for (auto tid = list.rbegin(); tid != list.rend(); tid++)
+  //   { // reverse_iterator
+  // #ifndef NONTS
+  //     if (thread_timestamp[txn] > thread_timestamp[(*tid)])
+  // #else
+  //     if (txn > (*tid))
+  // #endif
+  //     {
+  //       list.insert(tid.base(), txn);
+  //       break;
+  //     }
+  //   }
+  //   list.insert(list.begin(), txn);
 }
 
 bool TxExecutor::spinWait(Tuple *tuple, uint64_t key)
