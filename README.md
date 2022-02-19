@@ -31,17 +31,17 @@ $ "run some build_tools/(bootstrap*.sh) files"
 - Processing of bootstrap.sh :<br>
 Build third_party/masstree.
 ```
-$ ./build_tools/bootsrap.sh
+$ ./build_tools/bootstrap.sh
 ```
 - Processing of bootstrap_mimalloc.sh :<br>
 Build third_party/mimalloc.<br>
 ```
-$ ./build_tools/bootsrap_mimalloc.sh
+$ ./build_tools/bootstrap_mimalloc.sh
 ```
 - Processing of bootstrap_tbb.sh :<br>
 Build third_party/tbb<br>
 ```
-$ ./build_tools/bootsrap_tbb.sh
+$ ./build_tools/bootstrap_tbb.sh
 ```
 
 Export LD_LIBRARY_PATH to appropriate paths.<br>
