@@ -31,6 +31,8 @@
 #include "include/transaction.hh"
 #include "include/util.hh"
 
+#define INTERACTIVE
+
 void worker(size_t thid, char &ready, const bool &start, const bool &quit) {
   Result &myres = std::ref(SS2PLResult[thid]);
   Xoroshiro128Plus rnd;
@@ -63,10 +65,19 @@ RETRY:
     for (auto itr = trans.pro_set_.begin(); itr != trans.pro_set_.end();
          ++itr) {
       if ((*itr).ope_ == Ope::READ) {
+#ifdef INTERACTIVE
+        usleep(1);
+#endif
         trans.read((*itr).key_);
       } else if ((*itr).ope_ == Ope::WRITE) {
+#ifdef INTERACTIVE
+        usleep(1);
+#endif
         trans.write((*itr).key_);
       } else if ((*itr).ope_ == Ope::READ_MODIFY_WRITE) {
+#ifdef INTERACTIVE
+        usleep(1);
+#endif
         trans.readWrite((*itr).key_);
       } else {
         ERR;

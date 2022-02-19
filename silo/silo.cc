@@ -32,6 +32,9 @@
 #include "../include/util.hh"
 #include "../include/zipf.hh"
 
+#define INTERACTIVE
+#define INTERACTIVESLEEP (1)
+
 using namespace std;
 
 void worker(size_t thid, char &ready, const bool &start, const bool &quit) {
@@ -107,11 +110,23 @@ RETRY:
     for (auto itr = trans.pro_set_.begin(); itr != trans.pro_set_.end();
          ++itr) {
       if ((*itr).ope_ == Ope::READ) {
+#ifdef INTERACTIVE
+        usleep(INTERACTIVESLEEP);
+#endif
         trans.read((*itr).key_);
       } else if ((*itr).ope_ == Ope::WRITE) {
+#ifdef INTERACTIVE
+        usleep(INTERACTIVESLEEP);
+#endif
         trans.write((*itr).key_);
       } else if ((*itr).ope_ == Ope::READ_MODIFY_WRITE) {
+#ifdef INTERACTIVE
+        usleep(INTERACTIVESLEEP);
+#endif
         trans.read((*itr).key_);
+#ifdef INTERACTIVE
+        usleep(INTERACTIVESLEEP);
+#endif
         trans.write((*itr).key_);
       } else {
         ERR;

@@ -57,37 +57,37 @@ build edit_cache: phony CMakeFiles/edit_cache.util
 
 build cmake_object_order_depends_target_silo.exe: phony
 build CMakeFiles/silo.exe.dir/home/tatsu/non-wait/ccbench/common/result.cc.o: CXX_COMPILER__silo.2eexe /home/tatsu/non-wait/ccbench/common/result.cc || cmake_object_order_depends_target_silo.exe
-  DEFINES = -DADD_ANALYSIS=0 -DBACK_OFF=0 -DKEY_SIZE=8 -DMASSTREE_USE=1 -DNO_WAIT_LOCKING_IN_VALIDATION=1 -DNO_WAIT_OF_TICTOC=0 -DPARTITION_TABLE=0 -DPROCEDURE_SORT=0 -DSLEEP_READ_PHASE=0 -DVAL_SIZE="10*100" -DWAL=0
+  DEFINES = -DADD_ANALYSIS=0 -DBACK_OFF=0 -DKEY_SIZE=8 -DMASSTREE_USE=1 -DNO_WAIT_LOCKING_IN_VALIDATION=1 -DNO_WAIT_OF_TICTOC=0 -DPARTITION_TABLE=0 -DPROCEDURE_SORT=0 -DSLEEP_READ_PHASE=0 -DVAL_SIZE=1000 -DWAL=0
   DEP_FILE = CMakeFiles/silo.exe.dir/home/tatsu/non-wait/ccbench/common/result.cc.o.d
   FLAGS = -O3 -DNDEBUG   -std=c++1z
   OBJECT_DIR = CMakeFiles/silo.exe.dir
   OBJECT_FILE_DIR = CMakeFiles/silo.exe.dir/home/tatsu/non-wait/ccbench/common
 build CMakeFiles/silo.exe.dir/home/tatsu/non-wait/ccbench/common/util.cc.o: CXX_COMPILER__silo.2eexe /home/tatsu/non-wait/ccbench/common/util.cc || cmake_object_order_depends_target_silo.exe
-  DEFINES = -DADD_ANALYSIS=0 -DBACK_OFF=0 -DKEY_SIZE=8 -DMASSTREE_USE=1 -DNO_WAIT_LOCKING_IN_VALIDATION=1 -DNO_WAIT_OF_TICTOC=0 -DPARTITION_TABLE=0 -DPROCEDURE_SORT=0 -DSLEEP_READ_PHASE=0 -DVAL_SIZE="10*100" -DWAL=0
+  DEFINES = -DADD_ANALYSIS=0 -DBACK_OFF=0 -DKEY_SIZE=8 -DMASSTREE_USE=1 -DNO_WAIT_LOCKING_IN_VALIDATION=1 -DNO_WAIT_OF_TICTOC=0 -DPARTITION_TABLE=0 -DPROCEDURE_SORT=0 -DSLEEP_READ_PHASE=0 -DVAL_SIZE=1000 -DWAL=0
   DEP_FILE = CMakeFiles/silo.exe.dir/home/tatsu/non-wait/ccbench/common/util.cc.o.d
   FLAGS = -O3 -DNDEBUG   -std=c++1z
   OBJECT_DIR = CMakeFiles/silo.exe.dir
   OBJECT_FILE_DIR = CMakeFiles/silo.exe.dir/home/tatsu/non-wait/ccbench/common
 build CMakeFiles/silo.exe.dir/result.cc.o: CXX_COMPILER__silo.2eexe ../result.cc || cmake_object_order_depends_target_silo.exe
-  DEFINES = -DADD_ANALYSIS=0 -DBACK_OFF=0 -DKEY_SIZE=8 -DMASSTREE_USE=1 -DNO_WAIT_LOCKING_IN_VALIDATION=1 -DNO_WAIT_OF_TICTOC=0 -DPARTITION_TABLE=0 -DPROCEDURE_SORT=0 -DSLEEP_READ_PHASE=0 -DVAL_SIZE="10*100" -DWAL=0
+  DEFINES = -DADD_ANALYSIS=0 -DBACK_OFF=0 -DKEY_SIZE=8 -DMASSTREE_USE=1 -DNO_WAIT_LOCKING_IN_VALIDATION=1 -DNO_WAIT_OF_TICTOC=0 -DPARTITION_TABLE=0 -DPROCEDURE_SORT=0 -DSLEEP_READ_PHASE=0 -DVAL_SIZE=1000 -DWAL=0
   DEP_FILE = CMakeFiles/silo.exe.dir/result.cc.o.d
   FLAGS = -O3 -DNDEBUG   -std=c++1z
   OBJECT_DIR = CMakeFiles/silo.exe.dir
   OBJECT_FILE_DIR = CMakeFiles/silo.exe.dir
 build CMakeFiles/silo.exe.dir/silo.cc.o: CXX_COMPILER__silo.2eexe ../silo.cc || cmake_object_order_depends_target_silo.exe
-  DEFINES = -DADD_ANALYSIS=0 -DBACK_OFF=0 -DKEY_SIZE=8 -DMASSTREE_USE=1 -DNO_WAIT_LOCKING_IN_VALIDATION=1 -DNO_WAIT_OF_TICTOC=0 -DPARTITION_TABLE=0 -DPROCEDURE_SORT=0 -DSLEEP_READ_PHASE=0 -DVAL_SIZE="10*100" -DWAL=0
+  DEFINES = -DADD_ANALYSIS=0 -DBACK_OFF=0 -DKEY_SIZE=8 -DMASSTREE_USE=1 -DNO_WAIT_LOCKING_IN_VALIDATION=1 -DNO_WAIT_OF_TICTOC=0 -DPARTITION_TABLE=0 -DPROCEDURE_SORT=0 -DSLEEP_READ_PHASE=0 -DVAL_SIZE=1000 -DWAL=0
   DEP_FILE = CMakeFiles/silo.exe.dir/silo.cc.o.d
   FLAGS = -O3 -DNDEBUG   -std=c++1z
   OBJECT_DIR = CMakeFiles/silo.exe.dir
   OBJECT_FILE_DIR = CMakeFiles/silo.exe.dir
 build CMakeFiles/silo.exe.dir/transaction.cc.o: CXX_COMPILER__silo.2eexe ../transaction.cc || cmake_object_order_depends_target_silo.exe
-  DEFINES = -DADD_ANALYSIS=0 -DBACK_OFF=0 -DKEY_SIZE=8 -DMASSTREE_USE=1 -DNO_WAIT_LOCKING_IN_VALIDATION=1 -DNO_WAIT_OF_TICTOC=0 -DPARTITION_TABLE=0 -DPROCEDURE_SORT=0 -DSLEEP_READ_PHASE=0 -DVAL_SIZE="10*100" -DWAL=0
+  DEFINES = -DADD_ANALYSIS=0 -DBACK_OFF=0 -DKEY_SIZE=8 -DMASSTREE_USE=1 -DNO_WAIT_LOCKING_IN_VALIDATION=1 -DNO_WAIT_OF_TICTOC=0 -DPARTITION_TABLE=0 -DPROCEDURE_SORT=0 -DSLEEP_READ_PHASE=0 -DVAL_SIZE=1000 -DWAL=0
   DEP_FILE = CMakeFiles/silo.exe.dir/transaction.cc.o.d
   FLAGS = -O3 -DNDEBUG   -std=c++1z
   OBJECT_DIR = CMakeFiles/silo.exe.dir
   OBJECT_FILE_DIR = CMakeFiles/silo.exe.dir
 build CMakeFiles/silo.exe.dir/util.cc.o: CXX_COMPILER__silo.2eexe ../util.cc || cmake_object_order_depends_target_silo.exe
-  DEFINES = -DADD_ANALYSIS=0 -DBACK_OFF=0 -DKEY_SIZE=8 -DMASSTREE_USE=1 -DNO_WAIT_LOCKING_IN_VALIDATION=1 -DNO_WAIT_OF_TICTOC=0 -DPARTITION_TABLE=0 -DPROCEDURE_SORT=0 -DSLEEP_READ_PHASE=0 -DVAL_SIZE="10*100" -DWAL=0
+  DEFINES = -DADD_ANALYSIS=0 -DBACK_OFF=0 -DKEY_SIZE=8 -DMASSTREE_USE=1 -DNO_WAIT_LOCKING_IN_VALIDATION=1 -DNO_WAIT_OF_TICTOC=0 -DPARTITION_TABLE=0 -DPROCEDURE_SORT=0 -DSLEEP_READ_PHASE=0 -DVAL_SIZE=1000 -DWAL=0
   DEP_FILE = CMakeFiles/silo.exe.dir/util.cc.o.d
   FLAGS = -O3 -DNDEBUG   -std=c++1z
   OBJECT_DIR = CMakeFiles/silo.exe.dir
@@ -117,7 +117,7 @@ build silo.exe: CXX_EXECUTABLE_LINKER__silo.2eexe CMakeFiles/silo.exe.dir/home/t
 
 build cmake_object_order_depends_target_replay_test.exe: phony
 build CMakeFiles/replay_test.exe.dir/replayTest.cc.o: CXX_COMPILER__replay_test.2eexe ../replayTest.cc || cmake_object_order_depends_target_replay_test.exe
-  DEFINES = -DADD_ANALYSIS=0 -DBACK_OFF=0 -DKEY_SIZE=8 -DMASSTREE_USE=1 -DNO_WAIT_LOCKING_IN_VALIDATION=1 -DNO_WAIT_OF_TICTOC=0 -DPARTITION_TABLE=0 -DPROCEDURE_SORT=0 -DSLEEP_READ_PHASE=0 -DVAL_SIZE="10*100" -DWAL=0
+  DEFINES = -DADD_ANALYSIS=0 -DBACK_OFF=0 -DKEY_SIZE=8 -DMASSTREE_USE=1 -DNO_WAIT_LOCKING_IN_VALIDATION=1 -DNO_WAIT_OF_TICTOC=0 -DPARTITION_TABLE=0 -DPROCEDURE_SORT=0 -DSLEEP_READ_PHASE=0 -DVAL_SIZE=1000 -DWAL=0
   DEP_FILE = CMakeFiles/replay_test.exe.dir/replayTest.cc.o.d
   FLAGS = -O3 -DNDEBUG   -std=c++1z
   OBJECT_DIR = CMakeFiles/replay_test.exe.dir

@@ -34,6 +34,8 @@
 #define BAMBOO
 #define NONTS
 // #define PRINTF
+#define INTERACTIVE
+#define INTERACTIVESLEEP (1)
 
 #ifndef NONTS
 long long int central_timestamp = 0; //*** added by tatsu
@@ -95,8 +97,8 @@ void worker(size_t thid, char &ready, const bool &start, const bool &quit)
     {
       if ((*itr).ope_ == Ope::READ)
       {
-#ifdef PRINTF
-        printf("tx%d read tup %d\n", (int)thid, (int)(*itr).key_);
+#ifdef INTERACTIVE
+        usleep(INTERACTIVESLEEP);
 #endif
 #ifdef BAMBOO
         op_counter++;
@@ -105,8 +107,8 @@ void worker(size_t thid, char &ready, const bool &start, const bool &quit)
       }
       else if ((*itr).ope_ == Ope::WRITE)
       {
-#ifdef PRINTF
-        printf("tx%d write tup %d\n", (int)thid, (int)(*itr).key_);
+#ifdef INTERACTIVE
+        usleep(INTERACTIVESLEEP);
 #endif
 #ifdef BAMBOO
         op_counter++;
@@ -118,6 +120,9 @@ void worker(size_t thid, char &ready, const bool &start, const bool &quit)
       }
       else if ((*itr).ope_ == Ope::READ_MODIFY_WRITE)
       {
+#ifdef INTERACTIVE
+        usleep(INTERACTIVESLEEP);
+#endif
 #ifdef BAMBOO
         op_counter++;
         if (op_counter > (FLAGS_max_ope / 2))
@@ -180,7 +185,6 @@ try
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   chkArg();
   makeDB();
-  printf("Bamboo\n");
   for (int i = 0; i < FLAGS_thread_num; i++)
   {
     thread_stats[i] = 0;

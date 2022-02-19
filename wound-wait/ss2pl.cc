@@ -32,6 +32,7 @@
 #include "include/util.hh"
 
 // #define NONTS
+#define INTERACTIVE
 
 #ifndef NONTS
 long long int central_timestamp = 0; //*** added by tatsu
@@ -73,10 +74,19 @@ RETRY:
     for (auto itr = trans.pro_set_.begin(); itr != trans.pro_set_.end();
          ++itr) {
       if ((*itr).ope_ == Ope::READ) {
+#ifdef INTERACTIVE
+        usleep(1);
+#endif
         trans.read((*itr).key_);
       } else if ((*itr).ope_ == Ope::WRITE) {
+#ifdef INTERACTIVE
+        usleep(1);
+#endif
         trans.write((*itr).key_);
       } else if ((*itr).ope_ == Ope::READ_MODIFY_WRITE) {
+#ifdef INTERACTIVE
+        usleep(1);
+#endif
         trans.readWrite((*itr).key_);
       } else {
         ERR;

@@ -291,12 +291,11 @@ void TxExecutor::read(uint64_t key)
   LockAcquire(tuple, LockType::SH, key);
   if (spinWait(tuple, key))
   {
-#ifdef PRINTF
-    printf("tx%d read lock acquired\n", thid_);
-#endif
+#ifndef OPT1
     read_set_.emplace_back(key, tuple, tuple->val_);
 #ifdef BAMBOO
     LockRetire(tuple, key);
+#endif
 #endif
   }
 
@@ -560,7 +559,7 @@ void TxExecutor::PromoteWaiters(Tuple *tuple)
     tuple->remove(t, tuple->waiters);
     tuple->ownersAdd(t);
 #ifdef BAMBOO
-  addCommitSemaphore(tuple, t, t_type);
+    addCommitSemaphore(tuple, t, t_type);
 #endif
   }
 }
@@ -603,11 +602,9 @@ void TxExecutor::checkWound(vector<int> &list, LockType lock_type, Tuple *tuple,
 
 void TxExecutor::LockAcquire(Tuple *tuple, LockType lock_type, uint64_t key)
 {
-#ifdef OPT1
   int owner;
   LockType owners_type;
   bool owner_exists = false;
-#endif
   tuple->req_type[thid_] = lock_type;
   while (1)
   {
@@ -620,7 +617,6 @@ void TxExecutor::LockAcquire(Tuple *tuple, LockType lock_type, uint64_t key)
       checkWound(tuple->retired, lock_type, tuple, key);
 #endif
       checkWound(tuple->owners, lock_type, tuple, key);
-#ifdef OPT1
       if (tuple->owners.size() > 0)
       {
         owner = tuple->owners[0];
@@ -637,10 +633,6 @@ void TxExecutor::LockAcquire(Tuple *tuple, LockType lock_type, uint64_t key)
       {
         tuple->sortAdd(thid_, tuple->waiters);
       }
-#endif
-#ifndef OPT1
-      tuple->sortAdd(thid_, tuple->waiters);
-#endif
       PromoteWaiters(tuple);
       tuple->lock_.w_unlock();
       return;
@@ -965,8 +957,15 @@ bool TxExecutor::spinWait(Tuple *tuple, uint64_t key)
       {
         if (thid_ == tuple->owners[i])
         {
-#ifdef PRINTF
-          printf("tx%d ts %d found tuple %d\n", thid_, thread_timestamp[thid_], (int)key);
+#ifdef OPT1
+          // optimization 1: read lock retire without latch
+          if (tuple->req_type[thid_] == -1)
+          {
+            read_set_.emplace_back(key, tuple, tuple->val_);
+            tuple->ownersRemove(thid_);
+            tuple->sortAdd(thid_, tuple->retired);
+            PromoteWaiters(tuple);
+          }
 #endif
           tuple->lock_.w_unlock();
           return true;
