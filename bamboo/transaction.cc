@@ -481,6 +481,7 @@ FINISH_WRITE:
 void TxExecutor::unlockList(bool is_abort)
 {
   Tuple *tuple;
+  bool shouldRollback;
   for (auto itr = read_set_.begin(); itr != read_set_.end(); ++itr)
   {
     tuple = (*itr).rcdptr_;
@@ -489,9 +490,10 @@ void TxExecutor::unlockList(bool is_abort)
   for (auto itr = write_set_.begin(); itr != write_set_.end(); ++itr)
   {
     tuple = (*itr).rcdptr_;
-    LockRelease(tuple, is_abort, (*itr).key_);
+    if (tuple->req_type[thid_] == 0) {continue;}
+    shouldRollback = LockRelease(tuple, is_abort, (*itr).key_);
 #ifdef BAMBOO
-    if (is_abort)
+    if (is_abort && shouldRollback)
       memcpy(tuple->val_, tuple->prev_val_[thid_], VAL_SIZE);
 #endif
   }
@@ -729,7 +731,7 @@ vector<int>::iterator TxExecutor::woundRelease(int txn, Tuple *tuple, uint64_t k
   return it;
 }
 
-void TxExecutor::LockRelease(Tuple *tuple, bool is_abort, uint64_t key)
+bool TxExecutor::LockRelease(Tuple *tuple, bool is_abort, uint64_t key)
 {
 #ifdef BAMBOO
   bool was_head = false;
@@ -744,7 +746,7 @@ void TxExecutor::LockRelease(Tuple *tuple, bool is_abort, uint64_t key)
       if (tuple->req_type[thid_] == 0)
       {
         tuple->lock_.w_unlock();
-        return;
+        return false;
       }
 #ifdef PRINTF
       printf("tx%d ts %d abort %d threadstats %d locktype %d LockRelease tuple %d\n", thid_, thread_timestamp[thid_], is_abort, thread_stats[thid_], (int)type, (int)key);
@@ -801,12 +803,12 @@ void TxExecutor::LockRelease(Tuple *tuple, bool is_abort, uint64_t key)
       tuple->req_type[thid_] = 0;
       PromoteWaiters(tuple);
       tuple->lock_.w_unlock();
-      return;
+      return true;
     }
     else
     {
       if (tuple->req_type[thid_] == 0)
-        return;
+        return false;
       usleep(1);
     }
   }

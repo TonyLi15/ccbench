@@ -35,7 +35,7 @@
 #define NONTS
 // #define PRINTF
 #define INTERACTIVE
-#define INTERACTIVESLEEP (1)
+#define INTERACTIVESLEEP (100)
 
 #ifndef NONTS
 long long int central_timestamp = 0; //*** added by tatsu

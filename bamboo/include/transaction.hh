@@ -67,7 +67,7 @@ public:
 
   void LockAcquire(Tuple *tuple, LockType lock_type, uint64_t key);
 
-  void LockRelease(Tuple *tuple, bool is_abort, uint64_t key);
+  bool LockRelease(Tuple *tuple, bool is_abort, uint64_t key);
 
   void LockRetire(Tuple *tuple, uint64_t key);
 
