@@ -14,5 +14,6 @@ public:
   alignas(CACHE_LINE_SIZE) RWLock lock_;
   char val_[VAL_SIZE];
   int readers[224] = {0}; // *** added by tatsu: readers[i] = 1 means thread i is reading this tuple
+  int writer = -1;
   int writers[224] = {0}; // *** added by tatsu: writers[i] = 1 means thread i is writing this tuple
 };

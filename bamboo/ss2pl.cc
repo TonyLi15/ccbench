@@ -32,10 +32,12 @@
 #include "include/util.hh"
 
 #define BAMBOO
-#define NONTS
+#define RETIRERATIO (1 - 0.15)
+// #define NONTS
+// #define RANDOMTS
 // #define PRINTF
-#define INTERACTIVE
-#define INTERACTIVESLEEP (100)
+// #define INTERACTIVE
+// #define INTERACTIVESLEEP (100)
 
 #ifndef NONTS
 long long int central_timestamp = 0; //*** added by tatsu
@@ -55,6 +57,7 @@ void worker(size_t thid, char &ready, const bool &start, const bool &quit)
   FastZipf zipf(&rnd, FLAGS_zipf_skew, FLAGS_tuple_num);
   Backoff backoff(FLAGS_clocks_per_us);
   int op_counter;
+  int last_retire = FLAGS_max_ope * RETIRERATIO;
 
 #if MASSTREE_USE
   MasstreeWrapper<Tuple>::thread_init(int(thid));
@@ -74,14 +77,18 @@ void worker(size_t thid, char &ready, const bool &start, const bool &quit)
   {
     makeProcedure(trans.pro_set_, rnd, zipf, FLAGS_tuple_num, FLAGS_max_ope, FLAGS_thread_num,
                   FLAGS_rratio, FLAGS_rmw, FLAGS_ycsb, false, thid, myres);
+#ifndef NONTS
+  #ifdef RANDOMTS
+    thread_timestamp[thid] = rnd.next();
+  #else
+    thread_timestamp[thid] = __atomic_add_fetch(&central_timestamp, 1, __ATOMIC_SEQ_CST);
+  #endif
+#endif
   RETRY:
     thread_stats[thid] = 0;
     commit_semaphore[thid] = 0;
 #ifdef BAMBOO
     op_counter = 0;
-#endif
-#ifndef NONTS
-    thread_timestamp[thid] = __atomic_add_fetch(&central_timestamp, 1, __ATOMIC_SEQ_CST);
 #endif
 #ifdef PRINTF
     printf("tx%d starts: timestamp = %d\n", (int)thid, thread_timestamp[thid]);
@@ -112,7 +119,7 @@ void worker(size_t thid, char &ready, const bool &start, const bool &quit)
 #endif
 #ifdef BAMBOO
         op_counter++;
-        if (op_counter > (FLAGS_max_ope / 2))
+        if (op_counter > last_retire)
           trans.write((*itr).key_, false);
         else
 #endif

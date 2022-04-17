@@ -31,8 +31,8 @@
 #include "include/transaction.hh"
 #include "include/util.hh"
 
-// #define NONTS
-#define INTERACTIVE
+#define NONTS
+// #define INTERACTIVE
 
 #ifndef NONTS
 long long int central_timestamp = 0; //*** added by tatsu
@@ -62,11 +62,11 @@ void worker(size_t thid, char &ready, const bool &start, const bool &quit) {
   while (!loadAcquire(quit)) {
     makeProcedure(trans.pro_set_, rnd, zipf, FLAGS_tuple_num, FLAGS_max_ope, FLAGS_thread_num,
                   FLAGS_rratio, FLAGS_rmw, FLAGS_ycsb, false, thid, myres);
-RETRY:
-    thread_stats[thid] = 0; //*** added by tatsu
 #ifndef NONTS
     thread_timestamp[thid] = __atomic_add_fetch(&central_timestamp, 1, __ATOMIC_SEQ_CST); //*** added by tatsu
 #endif
+RETRY:
+    thread_stats[thid] = 0; //*** added by tatsu
     if (loadAcquire(quit)) break;
     if (thid == 0) leaderBackoffWork(backoff, SS2PLResult);
 
@@ -92,12 +92,8 @@ RETRY:
         ERR;
       }
 
-      if (thread_stats[thid] == 1) {                //*** added by tatsu
-        trans.status_ = TransactionStatus::aborted; //*** added by tatsu
-        trans.abort();                              //*** added by tatsu
-        goto RETRY;                                 //*** added by tatsu
-      }                                             //*** added by tatsu
-      if (trans.status_ == TransactionStatus::aborted) {
+      if (thread_stats[thid] == 1) {
+        trans.status_ = TransactionStatus::aborted;
         trans.abort();
         goto RETRY;
       }
@@ -115,6 +111,26 @@ RETRY:
   return;
 }
 
+void touchTuples([[maybe_unused]] size_t thid, uint64_t start, uint64_t end) {
+  Result &myres = std::ref(SS2PLResult[thid]);
+  TxExecutor trans(thid, (Result *)&myres);
+  for (auto i = start; i <= end; ++i) {
+    trans.warmupTuple(i);
+  } 
+}
+
+void warmup() {
+  cout << "begin warm up" << endl;
+  size_t maxthread = decideParallelBuildNumber(FLAGS_tuple_num);
+  std::vector<std::thread> thv;
+  for (size_t i = 0; i < maxthread; ++i) {
+    thv.emplace_back(touchTuples, i, i * (FLAGS_tuple_num / maxthread),
+                    (i + 1) * (FLAGS_tuple_num / maxthread) - 1);
+  }
+  for (auto &th : thv) th.join();
+  cout << "finish warm up" << endl;
+}
+
 int main(int argc, char *argv[]) try {
   gflags::SetUsageMessage("2PL benchmark.");
   gflags::ParseCommandLineFlags(&argc, &argv, true);
@@ -128,6 +144,7 @@ int main(int argc, char *argv[]) try {
   alignas(CACHE_LINE_SIZE) bool start = false;
   alignas(CACHE_LINE_SIZE) bool quit = false;
   initResult();
+  warmup();
   std::vector<char> readys(FLAGS_thread_num);
   std::vector<std::thread> thv;
   for (size_t i = 0; i < FLAGS_thread_num; ++i)

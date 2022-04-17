@@ -14,11 +14,31 @@
 
 // #define PRINTF
 #define BAMBOO
-#define NONTS
+// #define NONTS
+// #define RANDOMTS
 #define OPT1
 // #define NOUPGRADE
 
 using namespace std;
+
+int checkDuplicate(vector<int> &x, int t, int key)
+{
+  int index = key;
+  while (thread_timestamp[x[index]] == thread_timestamp[t])
+  {
+    if (x[index] == t)
+      return index;
+    index--;
+  }
+  index = key;
+  while (thread_timestamp[x[index]] == thread_timestamp[t])
+  {
+    if (x[index] == t)
+      return index;
+    index++;
+  }
+  return -1;
+}
 
 int myBinarySearch(vector<int> &x, int goal, int tail)
 {
@@ -51,6 +71,9 @@ int myBinarySearch(vector<int> &x, int goal, int tail)
     int search_key = floor((head + tail) / 2);
     if (thread_timestamp[x[search_key]] == thread_timestamp[goal])
     {
+#ifdef RANDOMTS
+      search_key = checkDuplicate(x, goal, search_key);
+#endif
       return search_key;
     }
     else if (thread_timestamp[goal] > thread_timestamp[x[search_key]])
@@ -100,8 +123,7 @@ int myBinaryInsert(vector<int> &x, int goal, int tail)
     int search_key = floor((head + tail) / 2);
     if (thread_timestamp[x[search_key]] == thread_timestamp[goal])
     {
-      printf("ERROR: myBinaryInsert\n");
-      exit(1);
+      return search_key;
     }
     else if (thread_timestamp[goal] > thread_timestamp[x[search_key]])
     {
@@ -223,7 +245,7 @@ void TxExecutor::abort()
 #endif
 
 #endif
-  usleep(1);
+  // usleep(1);
 }
 
 /**
@@ -490,7 +512,10 @@ void TxExecutor::unlockList(bool is_abort)
   for (auto itr = write_set_.begin(); itr != write_set_.end(); ++itr)
   {
     tuple = (*itr).rcdptr_;
-    if (tuple->req_type[thid_] == 0) {continue;}
+    if (tuple->req_type[thid_] == 0)
+    {
+      continue;
+    }
     shouldRollback = LockRelease(tuple, is_abort, (*itr).key_);
 #ifdef BAMBOO
     if (is_abort && shouldRollback)
@@ -515,10 +540,10 @@ void TxExecutor::addCommitSemaphore(Tuple *tuple, int t, LockType t_type)
   {
     r = tuple->retired[i];
     retired_type = (LockType)tuple->req_type[r];
-#ifndef NONTS
-    if (thread_timestamp[t] > thread_timestamp[r] &&
-#else
+#ifdef NONTS
     if (t > r &&
+#else
+    if (thread_timestamp[t] > thread_timestamp[r] &&
 #endif
         conflict(t_type, retired_type))
     {
@@ -583,10 +608,10 @@ void TxExecutor::checkWound(vector<int> &list, LockType lock_type, Tuple *tuple,
     {
       has_conflicts = false;
     }
-#ifndef NONTS
-    if (has_conflicts == true && thread_timestamp[thid_] < thread_timestamp[t])
-#else
+#ifdef NONTS
     if (has_conflicts == true && thid_ < t)
+#else
+    if (thid_ != t && has_conflicts == true && thread_timestamp[thid_] <= thread_timestamp[t])
 #endif
     {
 #ifdef PRINTF
@@ -847,10 +872,10 @@ vector<int>::iterator Tuple::itrRemove(int txn)
 {
   vector<int>::iterator it;
   int i;
-  for (i = 0; i < retired.size(); i++)
-  {
-    if (txn == retired[i])
-    {
+  if (retired.size() > 0) {
+    i = myBinarySearch(retired, txn, retired.size());
+    if (i != -1) {
+      assert(txn == *(list.begin() + i));
       it = retired.erase(retired.begin() + i);
       return it;
     }
@@ -909,20 +934,20 @@ bool Tuple::sortAdd(int txn, vector<int> &list)
     return true;
   }
   int i = myBinaryInsert(list, txn, list.size());
-#ifndef NONTS
-  assert(thread_timestamp[*(list.begin() + i)] > thread_timestamp[txn] &&
-         thread_timestamp[*(list.begin() + i - 1)] < thread_timestamp[txn]);
-#else
-  assert(*(list.begin() + i) > txn && *(list.begin() + i - 1) < txn);
-#endif
+// #ifdef NONTS
+//   assert(*(list.begin() + i) > txn && *(list.begin() + i - 1) < txn);
+// #else
+//   assert(thread_timestamp[*(list.begin() + i)] > thread_timestamp[txn] &&
+//          thread_timestamp[*(list.begin() + i - 1)] < thread_timestamp[txn]);
+// #endif
   list.insert(list.begin() + i, txn);
   return true;
   //   for (auto tid = list.begin(); tid != list.end(); tid++)
   //   { // reverse_iterator might be better
-  // #ifndef NONTS
-  //     if (thread_timestamp[txn] < thread_timestamp[(*tid)])
-  // #else
+  // #ifdef NONTS
   //     if (txn < (*tid))
+  // #else
+  //     if (thread_timestamp[txn] < thread_timestamp[(*tid)])
   // #endif
   //     {
   //       list.insert(tid, txn);
@@ -933,10 +958,10 @@ bool Tuple::sortAdd(int txn, vector<int> &list)
   //   return true;
   //   for (auto tid = list.rbegin(); tid != list.rend(); tid++)
   //   { // reverse_iterator
-  // #ifndef NONTS
-  //     if (thread_timestamp[txn] > thread_timestamp[(*tid)])
-  // #else
+  // #ifdef NONTS
   //     if (txn > (*tid))
+  // #else
+  //     if (thread_timestamp[txn] > thread_timestamp[(*tid)])
   // #endif
   //     {
   //       list.insert(tid.base(), txn);
@@ -1001,22 +1026,9 @@ bool TxExecutor::spinWait(Tuple *tuple, uint64_t key)
 
 void TxExecutor::eraseFromLists(Tuple *tuple)
 {
-  for (int i = 0; i < tuple->waiters.size(); i++)
-  {
-    if (thid_ == tuple->waiters[i])
-    {
-      tuple->waiters.erase(tuple->waiters.begin() + i);
-      tuple->req_type[thid_] = 0;
-    }
-  }
-  for (int i = 0; i < tuple->owners.size(); i++)
-  {
-    if (thid_ == tuple->owners[i])
-    {
-      tuple->owners.erase(tuple->owners.begin() + i);
-      tuple->req_type[thid_] = 0;
-    }
-  }
+  tuple->req_type[thid_] = 0;
+  if (tuple->remove(thid_, tuple->waiters)) return;
+  tuple->ownersRemove(thid_);
 }
 
 #ifndef NOUPGRADE
@@ -1061,10 +1073,10 @@ bool TxExecutor::lockUpgrade(Tuple *tuple, uint64_t key)
             {
               r = tuple->retired[j];
               retired_type = (LockType)tuple->req_type[r];
-#ifndef NONTS
-              if (thread_timestamp[thid_] > thread_timestamp[r] &&
-#else
+#ifdef NONTS
               if (thid_ > r &&
+#else
+              if (thread_timestamp[thid_] > thread_timestamp[r] &&
 #endif
                   conflict(my_type, retired_type))
               {
@@ -1099,10 +1111,10 @@ bool TxExecutor::lockUpgrade(Tuple *tuple, uint64_t key)
           {
             r = tuple->retired[i];
             retired_type = (LockType)tuple->req_type[r];
-#ifndef NONTS
-            if (thread_timestamp[thid_] > thread_timestamp[r] &&
-#else
+#ifdef NONTS
             if (thid_ > r &&
+#else
+            if (thread_timestamp[thid_] > thread_timestamp[r] &&
 #endif
                 retired_type == LockType::SH)
             {

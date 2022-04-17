@@ -21,6 +21,7 @@ extern void writeValGenerator(char *writeVal, size_t val_size, size_t thid);
 class TxExecutor {
 public:
   alignas(CACHE_LINE_SIZE) int thid_;
+  uint64_t txid_;
   TransactionStatus status_ = TransactionStatus::inFlight;
   Result *sres_;
   vector <SetElement<Tuple>> read_set_;
@@ -30,7 +31,7 @@ public:
   char write_val_[VAL_SIZE];
   char return_val_[VAL_SIZE];
 
-  TxExecutor(int thid, Result *sres) : thid_(thid), sres_(sres) {
+  TxExecutor(int thid, Result *sres) : thid_(thid), sres_(sres), txid_(thid) {
     read_set_.reserve(FLAGS_max_ope);
     write_set_.reserve(FLAGS_max_ope);
     pro_set_.reserve(FLAGS_max_ope);
@@ -78,8 +79,6 @@ public:
   void checkLists(uint64_t key);
 
   void eraseFromLists(Tuple *tuple); // erase txn from waiters and owners lists in case of abort during spinwait
-
-  bool woundSuccess(Tuple *tuple, const int killer, const LockType my_type);
 
   vector<int>::iterator woundRelease(int txn, Tuple *tuple, uint64_t key);
   
