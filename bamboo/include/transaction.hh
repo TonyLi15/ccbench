@@ -21,6 +21,7 @@ extern void writeValGenerator(char *writeVal, size_t val_size, size_t thid);
 class TxExecutor {
 public:
   alignas(CACHE_LINE_SIZE) int thid_;
+  uint64_t txid_;
   TransactionStatus status_ = TransactionStatus::inFlight;
   Result *sres_;
   vector <SetElement<Tuple>> read_set_;
@@ -30,17 +31,22 @@ public:
   char write_val_[VAL_SIZE];
   char return_val_[VAL_SIZE];
 
-  TxExecutor(int thid, Result *sres) : thid_(thid), sres_(sres) {
+  // Tuple *tuple;
+
+  TxExecutor(int thid, Result *sres) : thid_(thid), sres_(sres), txid_(thid) {
     read_set_.reserve(FLAGS_max_ope);
     write_set_.reserve(FLAGS_max_ope);
     pro_set_.reserve(FLAGS_max_ope);
 
     genStringRepeatedNumber(write_val_, VAL_SIZE, thid);
+    genStringRepeatedNumber(return_val_, VAL_SIZE, thid);
   }
 
   SetElement<Tuple> *searchReadSet(uint64_t key);
 
   SetElement<Tuple> *searchWriteSet(uint64_t key);
+
+  void warmupTuple(uint64_t key);
 
   void begin();
 
@@ -65,25 +71,29 @@ public:
 
   void PromoteWaiters(Tuple *tuple);
 
-  void LockAcquire(Tuple *tuple, LockType lock_type, uint64_t key);
+  void writelockAcquire(LockType lock_type, uint64_t key, Tuple *tuple);
 
-  bool LockRelease(Tuple *tuple, bool is_abort, uint64_t key);
+  bool LockRelease(bool is_abort, uint64_t key, Tuple *tuple);
 
-  void LockRetire(Tuple *tuple, uint64_t key);
+  void LockRetire(uint64_t key, Tuple *tuple);
 
-  bool spinWait(Tuple *tuple, uint64_t key);
+  bool spinWait(uint64_t key, Tuple *tuple);
 
-  bool lockUpgrade(Tuple *tuple, uint64_t key);
+  bool lockUpgrade(uint64_t key, Tuple *tuple);
 
-  void checkLists(uint64_t key);
+  void checkLists(uint64_t key, Tuple *tuple);
 
   void eraseFromLists(Tuple *tuple); // erase txn from waiters and owners lists in case of abort during spinwait
-
-  bool woundSuccess(Tuple *tuple, const int killer, const LockType my_type);
 
   vector<int>::iterator woundRelease(int txn, Tuple *tuple, uint64_t key);
   
   void cascadeAbort(int txn, vector<int> all_owners, Tuple *tuple, uint64_t key);
 
-  void addCommitSemaphore(Tuple *tuple, int t, LockType t_type);
+  void addCommitSemaphore(int t, LockType t_type, Tuple *tuple);
+
+  bool readlockAcquire(LockType lock_type, uint64_t key, Tuple *tuple);
+
+  bool readWait(Tuple *tuple, uint64_t key);
+  
+  bool adjustFollowingSemaphore(Tuple *tuple, int txn);
 };

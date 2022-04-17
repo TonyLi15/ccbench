@@ -1,4 +1,4 @@
-# 2PL
+# Bamboo
 
 ## How to use
 - Build masstree
@@ -6,13 +6,13 @@
 $ cd ../
 $ ./bootstrap.sh
 ```
-This makes ../third_party/masstree/libkohler_masstree_json.a used by building ss2pl.
+This makes ../third_party/masstree/libkohler_masstree_json.a used by building bamboo.
 - Build mimalloc
 ```
 $ cd ../
 $ ./bootstrap_mimalloc.sh
 ```
-This makes ../third_party/mimalloc/out/release/libmimalloc.a used by building ss2pl.
+This makes ../third_party/mimalloc/out/release/libmimalloc.a used by building bamboo.
 - Build 
 ```
 $ mkdir build
@@ -22,7 +22,7 @@ $ ninja
 ```
 - Confirm usage 
 ```
-$ ./ss2pl.exe -help
+$ ./bamboo.exe -help
 ```
 - Execution example 
 ```
@@ -45,8 +45,8 @@ default : `4`
 
 ## Optimizations
 - Backoff.
-- Timeout of dead lock resolution.
-- No-wait of dead lock resolution.
+- Define NONTS for TID, NONTS and FAIR for FairTID
+- Define RANDOM for RandID
 
 ## Implementation
 - Lock : reader/writer lock

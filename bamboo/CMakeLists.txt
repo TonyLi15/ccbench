@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(ccbench_ss2pl
+project(ccbench_bamboo
         VERSION 0.0.1
-        DESCRIPTION "ss2pl of ccbench"
+        DESCRIPTION "bamboo of ccbench"
         LANGUAGES CXX)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/../cmake")
@@ -25,15 +25,15 @@ include(CompileOptions)
 file(GLOB ERMIA_SOURCES
         "../common/result.cc"
         "../common/util.cc"
-        "ss2pl.cc"
+        "bamboo.cc"
         "result.cc"
         "transaction.cc"
         "util.cc"
         )
 
-add_executable(ss2pl.exe ${ERMIA_SOURCES})
+add_executable(bamboo.exe ${ERMIA_SOURCES})
 
-target_link_libraries(ss2pl.exe
+target_link_libraries(bamboo.exe
         Boost::filesystem
         gflags::gflags
         ${PROJECT_SOURCE_DIR}/../third_party/mimalloc/out/release/libmimalloc.a
