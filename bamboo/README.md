@@ -40,8 +40,6 @@ default : `0`
 default : `1`
 - `VAL_SIZE` : Value of key-value size. In other words, payload size.<br>
 default : `4`
-- `DLR0` : Dead lock resolution is timeout.
-- `DLR1` : Dead lock resolution is no-wait.
 
 ## Optimizations
 - Backoff.
