@@ -26,7 +26,6 @@ $ sudo apt update -y && sudo apt-get install -y $(cat build_tools/ubuntu.deps)
 note : Make install should be done by specifying a user-local path at the time of configure.
 ```
 $ cd ccbench
-$ "run some build_tools/(bootstrap*.sh) files"
 ```
 - Processing of bootstrap.sh :<br>
 Build third_party/masstree.
