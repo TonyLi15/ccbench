@@ -1,7 +1,15 @@
 # Bamboo
 
+## Publicized Experiments
+```
+$ ../script/low_contention.sh
+$ ../script/high_contentionA.sh
+$ ../script/high_contentionB.sh
+```
+Please switch between Bamboo, TID, FairTID, and RandID each time.
+
 ## How to use
-- Build masstree
+- Build masstree (optional)
 ```
 $ cd ../
 $ ./bootstrap.sh
