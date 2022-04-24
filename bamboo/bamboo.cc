@@ -33,7 +33,7 @@
 
 #define BAMBOO
 #define RETIRERATIO (1 - 0.15)
-#define NONTS
+// #define NONTS
 // #define RANDOM
 // #define INTERACTIVESLEEP (100)
 
@@ -183,16 +183,16 @@ void warmup() {
   cout << "finish warm up" << endl;
 }
 
-void calcSD() {
-  double mean = SS2PLResult[0].total_commit_counts_ / FLAGS_thread_num;
-  double sum = 0;
-  for (unsigned int i = 0; i < FLAGS_thread_num; ++i)
-  {
-    sum += pow(SS2PLResult[i].local_commit_counts_ - mean, 2);
-  }
-  double sd = sqrt(sum / FLAGS_thread_num);
-  cout << "fairness:\t" << sd << endl;
-}
+// void calcSD() {
+//   double mean = SS2PLResult[0].total_commit_counts_ / FLAGS_thread_num;
+//   double sum = 0;
+//   for (unsigned int i = 0; i < FLAGS_thread_num; ++i)
+//   {
+//     sum += pow(SS2PLResult[i].local_commit_counts_ - mean, 2);
+//   }
+//   double sd = sqrt(sum / FLAGS_thread_num);
+//   cout << "fairness:\t" << sd << endl;
+// }
 
 int main(int argc, char *argv[])
 try

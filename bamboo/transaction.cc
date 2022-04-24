@@ -1,5 +1,5 @@
-#define NONTS
-#define FAIR
+// #define NONTS
+// #define FAIR
 // #define RANDOM
 
 #ifndef NONTS
