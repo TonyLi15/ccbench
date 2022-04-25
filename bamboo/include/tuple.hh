@@ -26,7 +26,6 @@ public:
   vector<int> waiters; // *** added by tatsu: writers[i] = 1 means thread i is writing this tuple
   char val_[VAL_SIZE];
   int8_t req_type[224] = {0}; // read -1 : write 1 : no touch 0
-  char prev_val_[224][VAL_SIZE];
 
   
   Tuple() {

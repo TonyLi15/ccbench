@@ -150,7 +150,6 @@ void TxExecutor::warmupTuple(uint64_t key) {
 
   memcpy(tuple->val_, write_val_, VAL_SIZE);
   for (unsigned int i = 0; i < FLAGS_thread_num; ++i) {
-    memcpy(tuple->prev_val_[i], tuple->val_, VAL_SIZE);
     tuple->req_type[i] = 1;
     tuple->req_type[i] = 0;
   }
@@ -288,9 +287,7 @@ void TxExecutor::write(uint64_t key, bool should_retire)
         // remove old element of read lock list.
         if (spinWait(key, tuple))
         {
-          write_set_.emplace_back(key, (*rItr).rcdptr_);
           read_set_.erase(rItr);
-          memcpy(tuple->prev_val_[thid_], tuple->val_, VAL_SIZE);
           memcpy(tuple->val_, write_val_, VAL_SIZE);
           if (should_retire)
             LockRetire(key, tuple);
@@ -306,8 +303,6 @@ void TxExecutor::write(uint64_t key, bool should_retire)
   writelockAcquire(LockType::EX, key, tuple);
   if (spinWait(key, tuple))
   {
-    write_set_.emplace_back(key, tuple);
-    memcpy(tuple->prev_val_[thid_], tuple->val_, VAL_SIZE);
     memcpy(tuple->val_, write_val_, VAL_SIZE);
     if (should_retire)
       LockRetire(key, tuple);
@@ -353,9 +348,7 @@ void TxExecutor::readWrite(uint64_t key, bool should_retire)
         // remove old element of read lock list.
         if (spinWait(key, tuple))
         {
-          write_set_.emplace_back(key, (*rItr).rcdptr_);
           read_set_.erase(rItr);
-          memcpy(tuple->prev_val_[thid_], tuple->val_, VAL_SIZE);
           memcpy(tuple->val_, write_val_, VAL_SIZE);
           if (should_retire)
             LockRetire(key, tuple);
@@ -373,8 +366,6 @@ void TxExecutor::readWrite(uint64_t key, bool should_retire)
     // read payload
     memcpy(this->return_val_, tuple->val_, VAL_SIZE);
     // finish read.
-    write_set_.emplace_back(key, tuple);
-    memcpy(tuple->prev_val_[thid_], tuple->val_, VAL_SIZE);
     memcpy(tuple->val_, write_val_, VAL_SIZE);
     if (should_retire)
       LockRetire(key, tuple);
@@ -405,8 +396,8 @@ void TxExecutor::unlockList(bool is_abort)
       continue;
     }
     shouldRollback = LockRelease(is_abort, (*itr).key_, tuple);
-    if (is_abort && shouldRollback)
-      memcpy(tuple->val_, tuple->prev_val_[thid_], VAL_SIZE);
+    if (is_abort && shouldRollback) 
+      memcpy(tuple->val_, (*itr).val_, VAL_SIZE);
   }
 }
 
@@ -563,7 +554,14 @@ vector<int>::iterator TxExecutor::woundRelease(int txn, Tuple *tuple, uint64_t k
   if (type == LockType::EX)
   {
     cascadeAbort(txn, all_owners, tuple, key);
-    memcpy(tuple->val_, tuple->prev_val_[txn], VAL_SIZE);
+    TxExecutor *trans = TxPointers[txn];
+    for (auto itr = trans->write_set_.begin(); itr != trans->write_set_.end(); ++itr)
+    {
+      if ((*itr).key_ == key) {
+        memcpy(tuple->val_, (*itr).val_, VAL_SIZE);
+        break;
+      }
+    }
   }
   auto it = tuple->itrRemove(txn);
   all_owners = concat(tuple->retired, tuple->owners);
@@ -747,6 +745,10 @@ bool TxExecutor::spinWait(uint64_t key, Tuple *tuple)
             PromoteWaiters(tuple);
           }
 #endif
+          else if (tuple->req_type[thid_] == 1) 
+          {
+            write_set_.emplace_back(key, tuple, tuple->val_);
+          }
           tuple->lock_.w_unlock();
           return true;
         }
@@ -885,31 +887,31 @@ bool TxExecutor::readlockAcquire(LockType SH_lock, uint64_t key, Tuple *tuple)
   }
 }
 
-bool TxExecutor::adjustFollowingSemaphore(Tuple *tuple, int txn) {
-  LockType t_type = LockType::SH;
-  int follower;
-  LockType f_type;
+// bool TxExecutor::adjustFollowingSemaphore(Tuple *tuple, int txn) {
+//   LockType t_type = LockType::SH;
+//   int follower;
+//   LockType f_type;
 
-  if (tuple->retired.size() && thread_timestamp[txn] < thread_timestamp[tuple->retired[0]]) {
-    follower = tuple->retired[0];
-    f_type = (LockType)tuple->req_type[follower];
-    if (f_type == LockType::EX) {
-      if(pending_commit[follower] == 1) return false;
-      __atomic_add_fetch(&commit_semaphore[follower], 1, __ATOMIC_SEQ_CST);
-    }
-    return true;
-  }
-  if (tuple->owners.size() && thread_timestamp[txn] < thread_timestamp[tuple->owners[0]]) {
-    follower = tuple->owners[0];
-    f_type = (LockType)tuple->req_type[follower];
-    if (f_type == LockType::EX) {
-      if(pending_commit[follower] == 1) return false;
-      __atomic_add_fetch(&commit_semaphore[follower], 1, __ATOMIC_SEQ_CST);
-    }
-    return true;
-  }
-  return true;
-}
+//   if (tuple->retired.size() && thread_timestamp[txn] < thread_timestamp[tuple->retired[0]]) {
+//     follower = tuple->retired[0];
+//     f_type = (LockType)tuple->req_type[follower];
+//     if (f_type == LockType::EX) {
+//       if(pending_commit[follower] == 1) return false;
+//       __atomic_add_fetch(&commit_semaphore[follower], 1, __ATOMIC_SEQ_CST);
+//     }
+//     return true;
+//   }
+//   if (tuple->owners.size() && thread_timestamp[txn] < thread_timestamp[tuple->owners[0]]) {
+//     follower = tuple->owners[0];
+//     f_type = (LockType)tuple->req_type[follower];
+//     if (f_type == LockType::EX) {
+//       if(pending_commit[follower] == 1) return false;
+//       __atomic_add_fetch(&commit_semaphore[follower], 1, __ATOMIC_SEQ_CST);
+//     }
+//     return true;
+//   }
+//   return true;
+// }
 
 bool TxExecutor::readWait(Tuple *tuple, uint64_t key)
 {
@@ -1067,7 +1069,6 @@ void TxExecutor::warmupTuple(uint64_t key) {
 
   memcpy(tuple->val_, write_val_, VAL_SIZE);
   for (unsigned int i = 0; i < FLAGS_thread_num; ++i) {
-    memcpy(tuple->prev_val_[i], tuple->val_, VAL_SIZE);
     tuple->req_type[i] = 1;
     tuple->req_type[i] = 0;
   }
@@ -1208,9 +1209,7 @@ void TxExecutor::write(uint64_t key, bool should_retire)
         // remove old element of read lock list.
         if (spinWait(key, tuple))
         {
-          write_set_.emplace_back(key, (*rItr).rcdptr_);
           read_set_.erase(rItr);
-          memcpy(tuple->prev_val_[thid_], tuple->val_, VAL_SIZE);
           memcpy(tuple->val_, write_val_, VAL_SIZE);
           if (should_retire)
             LockRetire(key, tuple);
@@ -1226,8 +1225,6 @@ void TxExecutor::write(uint64_t key, bool should_retire)
   writelockAcquire(LockType::EX, key, tuple);
   if (spinWait(key, tuple))
   {
-    write_set_.emplace_back(key, tuple);
-    memcpy(tuple->prev_val_[thid_], tuple->val_, VAL_SIZE);
     memcpy(tuple->val_, write_val_, VAL_SIZE);
     if (should_retire)
       LockRetire(key, tuple);
@@ -1279,9 +1276,7 @@ void TxExecutor::readWrite(uint64_t key, bool should_retire)
         // remove old element of read lock list.
         if (spinWait(key, tuple))
         {
-          write_set_.emplace_back(key, (*rItr).rcdptr_);
           read_set_.erase(rItr);
-          memcpy(tuple->prev_val_[thid_], tuple->val_, VAL_SIZE);
           memcpy(tuple->val_, write_val_, VAL_SIZE);
           if (should_retire)
             LockRetire(key, tuple);
@@ -1299,8 +1294,6 @@ void TxExecutor::readWrite(uint64_t key, bool should_retire)
     // read payload
     memcpy(this->return_val_, tuple->val_, VAL_SIZE);
     // finish read.
-    write_set_.emplace_back(key, tuple);
-    memcpy(tuple->prev_val_[thid_], tuple->val_, VAL_SIZE);
     memcpy(tuple->val_, write_val_, VAL_SIZE);
     if (should_retire)
       LockRetire(key, tuple);
@@ -1332,7 +1325,7 @@ void TxExecutor::unlockList(bool is_abort)
     }
     shouldRollback = LockRelease(is_abort, (*itr).key_, tuple);
     if (is_abort && shouldRollback)
-      memcpy(tuple->val_, tuple->prev_val_[thid_], VAL_SIZE);
+      memcpy(tuple->val_, (*itr).val_, VAL_SIZE);
   }
 }
 
@@ -1497,7 +1490,14 @@ vector<int>::iterator TxExecutor::woundRelease(int txn, Tuple *tuple, uint64_t k
   if (type == LockType::EX)
   {
     cascadeAbort(txn, all_owners, tuple, key);
-    memcpy(tuple->val_, tuple->prev_val_[txnThread], VAL_SIZE);
+    TxExecutor *trans = TxPointers[txnThread];
+    for (auto itr = trans->write_set_.begin(); itr != trans->write_set_.end(); ++itr)
+    {
+      if ((*itr).key_ == key) {
+        memcpy(tuple->val_, (*itr).val_, VAL_SIZE);
+        break;
+      }
+    }
   }
   auto it = tuple->itrRemove(txn);
   all_owners = concat(tuple->retired, tuple->owners);
@@ -1684,6 +1684,10 @@ bool TxExecutor::spinWait(uint64_t key, Tuple *tuple)
             PromoteWaiters(tuple);
           }
 #endif
+          else if (tuple->req_type[thid_] == 1) 
+          {
+            write_set_.emplace_back(key, tuple, tuple->val_);
+          }
           tuple->lock_.w_unlock();
           return true;
         }

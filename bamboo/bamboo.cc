@@ -31,7 +31,6 @@
 #include "include/transaction.hh"
 #include "include/util.hh"
 
-// #define PRINTF
 #define BAMBOO
 #define RETIRERATIO (1 - 0.15)
 // #define NONTS
@@ -51,6 +50,7 @@ void worker(size_t thid, char &ready, const bool &start, const bool &quit)
   Xoroshiro128Plus rnd;
   rnd.init();
   TxExecutor trans(thid, (Result *)&myres);
+  TxPointers[thid] = &trans;
   FastZipf zipf(&rnd, FLAGS_zipf_skew, FLAGS_tuple_num);
   Backoff backoff(FLAGS_clocks_per_us);
   int op_counter;
