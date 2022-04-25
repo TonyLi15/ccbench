@@ -17,13 +17,6 @@
 #include "include/common.hh"
 #include "include/transaction.hh"
 
-<<<<<<< HEAD
-// #define PRINTF
-#define BAMBOO
-// #define NONTS
-// #define RANDOMTS
-=======
->>>>>>> master
 #define OPT1
 
 using namespace std;
@@ -56,13 +49,8 @@ int myBinarySearch(vector<int> &x, int goal, int tail)
     int search_key = floor((head + tail) / 2);
     if (thread_timestamp[x[search_key]] == thread_timestamp[goal])
     {
-<<<<<<< HEAD
-#ifdef RANDOMTS
-      search_key = checkDuplicate(x, goal, search_key);
-=======
 #ifdef RANDOM
       assert(x[search_key] == goal);
->>>>>>> master
 #endif
       return search_key;
     }
@@ -199,10 +187,6 @@ void TxExecutor::abort()
   sres_->local_backoff_latency_ += rdtscp() - start;
 #endif
 #endif
-<<<<<<< HEAD
-  // usleep(1);
-=======
->>>>>>> master
 }
 
 /**
@@ -420,12 +404,7 @@ void TxExecutor::unlockList(bool is_abort)
     {
       continue;
     }
-<<<<<<< HEAD
-    shouldRollback = LockRelease(tuple, is_abort, (*itr).key_);
-#ifdef BAMBOO
-=======
     shouldRollback = LockRelease(is_abort, (*itr).key_, tuple);
->>>>>>> master
     if (is_abort && shouldRollback)
       memcpy(tuple->val_, tuple->prev_val_[thid_], VAL_SIZE);
   }
@@ -447,16 +426,7 @@ void TxExecutor::addCommitSemaphore(int t, LockType t_type, Tuple *tuple)
   {
     r = tuple->retired[i];
     retired_type = (LockType)tuple->req_type[r];
-<<<<<<< HEAD
-#ifdef NONTS
-    if (t > r &&
-#else
-    if (thread_timestamp[t] > thread_timestamp[r] &&
-#endif
-        conflict(t_type, retired_type))
-=======
     if (conflict(t_type, retired_type))
->>>>>>> master
     {
       __atomic_add_fetch(&commit_semaphore[t], 1, __ATOMIC_SEQ_CST);
       break;
@@ -509,19 +479,7 @@ void TxExecutor::checkWound(vector<int> &list, LockType lock_type, Tuple *tuple,
     {
       has_conflicts = true;
     }
-<<<<<<< HEAD
-    else
-    {
-      has_conflicts = false;
-    }
-#ifdef NONTS
-    if (has_conflicts == true && thid_ < t)
-#else
-    if (thid_ != t && has_conflicts == true && thread_timestamp[thid_] <= thread_timestamp[t])
-#endif
-=======
     if (has_conflicts == true && thread_timestamp[thid_] <= thread_timestamp[t])
->>>>>>> master
     {
       thread_stats[t] = 1;
       it = woundRelease(t, tuple, key);
@@ -765,46 +723,8 @@ bool Tuple::sortAdd(int txn, vector<int> &list)
     return true;
   }
   int i = myBinaryInsert(list, txn, list.size());
-<<<<<<< HEAD
-// #ifdef NONTS
-//   assert(*(list.begin() + i) > txn && *(list.begin() + i - 1) < txn);
-// #else
-//   assert(thread_timestamp[*(list.begin() + i)] > thread_timestamp[txn] &&
-//          thread_timestamp[*(list.begin() + i - 1)] < thread_timestamp[txn]);
-// #endif
   list.insert(list.begin() + i, txn);
   return true;
-  //   for (auto tid = list.begin(); tid != list.end(); tid++)
-  //   { // reverse_iterator might be better
-  // #ifdef NONTS
-  //     if (txn < (*tid))
-  // #else
-  //     if (thread_timestamp[txn] < thread_timestamp[(*tid)])
-  // #endif
-  //     {
-  //       list.insert(tid, txn);
-  //       return true;
-  //     }
-  //   }
-  //   list.push_back(txn);
-  //   return true;
-  //   for (auto tid = list.rbegin(); tid != list.rend(); tid++)
-  //   { // reverse_iterator
-  // #ifdef NONTS
-  //     if (txn > (*tid))
-  // #else
-  //     if (thread_timestamp[txn] > thread_timestamp[(*tid)])
-  // #endif
-  //     {
-  //       list.insert(tid.base(), txn);
-  //       break;
-  //     }
-  //   }
-  //   list.insert(list.begin(), txn);
-=======
-  list.insert(list.begin() + i, txn);
-  return true;
->>>>>>> master
 }
 
 bool TxExecutor::spinWait(uint64_t key, Tuple *tuple)
@@ -885,15 +805,7 @@ bool TxExecutor::lockUpgrade(uint64_t key, Tuple *tuple)
             {
               r = tuple->retired[j];
               retired_type = (LockType)tuple->req_type[r];
-<<<<<<< HEAD
-#ifdef NONTS
-              if (thid_ > r &&
-#else
               if (thread_timestamp[thid_] > thread_timestamp[r] &&
-#endif
-=======
-              if (thread_timestamp[thid_] > thread_timestamp[r] &&
->>>>>>> master
                   conflict(my_type, retired_type))
               {
                 break;
@@ -920,15 +832,7 @@ bool TxExecutor::lockUpgrade(uint64_t key, Tuple *tuple)
           {
             r = tuple->retired[i];
             retired_type = (LockType)tuple->req_type[r];
-<<<<<<< HEAD
-#ifdef NONTS
-            if (thid_ > r &&
-#else
             if (thread_timestamp[thid_] > thread_timestamp[r] &&
-#endif
-=======
-            if (thread_timestamp[thid_] > thread_timestamp[r] &&
->>>>>>> master
                 retired_type == LockType::SH)
             {
               __atomic_add_fetch(&commit_semaphore[thid_], 1, __ATOMIC_SEQ_CST);

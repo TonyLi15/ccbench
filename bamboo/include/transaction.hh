@@ -31,11 +31,8 @@ public:
   char write_val_[VAL_SIZE];
   char return_val_[VAL_SIZE];
 
-<<<<<<< HEAD
-=======
   // Tuple *tuple;
 
->>>>>>> master
   TxExecutor(int thid, Result *sres) : thid_(thid), sres_(sres), txid_(thid) {
     read_set_.reserve(FLAGS_max_ope);
     write_set_.reserve(FLAGS_max_ope);
