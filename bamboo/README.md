@@ -1,18 +1,27 @@
-# 2PL
+# Bamboo
+
+## Publicized Experiments
+In build directory, execute:
+```
+$ ../script/low_contention.sh
+$ ../script/high_contentionA.sh
+$ ../script/high_contentionB.sh
+```
+Please switch between Bamboo, TID, FairTID, and RandID each time.
 
 ## How to use
-- Build masstree
+- Build masstree (optional)
 ```
 $ cd ../
 $ ./bootstrap.sh
 ```
-This makes ../third_party/masstree/libkohler_masstree_json.a used by building ss2pl.
+This makes ../third_party/masstree/libkohler_masstree_json.a used by building bamboo.
 - Build mimalloc
 ```
 $ cd ../
 $ ./bootstrap_mimalloc.sh
 ```
-This makes ../third_party/mimalloc/out/release/libmimalloc.a used by building ss2pl.
+This makes ../third_party/mimalloc/out/release/libmimalloc.a used by building bamboo.
 - Build 
 ```
 $ mkdir build
@@ -22,7 +31,7 @@ $ ninja
 ```
 - Confirm usage 
 ```
-$ ./ss2pl.exe -help
+$ ./bamboo.exe -help
 ```
 - Execution example 
 ```
@@ -40,13 +49,11 @@ default : `0`
 default : `1`
 - `VAL_SIZE` : Value of key-value size. In other words, payload size.<br>
 default : `4`
-- `DLR0` : Dead lock resolution is timeout.
-- `DLR1` : Dead lock resolution is no-wait.
 
 ## Optimizations
 - Backoff.
-- Timeout of dead lock resolution.
-- No-wait of dead lock resolution.
+- Define NONTS for TID, NONTS and FAIR for FairTID
+- Define RANDOM for RandID
 
 ## Implementation
 - Lock : reader/writer lock
