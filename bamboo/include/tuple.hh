@@ -2,6 +2,7 @@
 
 #include <atomic>
 #include <mutex>
+#include <bitset>
 
 #include "../../include/cache_line_size.hh"
 #include "../../include/inline.hh"
@@ -26,6 +27,15 @@ public:
   vector<int> waiters; // *** added by tatsu: writers[i] = 1 means thread i is writing this tuple
   char val_[VAL_SIZE];
   int8_t req_type[224] = {0}; // read -1 : write 1 : no touch 0
+  bitset<2*224> req;  
+  // even index => read 0 : write 1
+  // odd index => no lock 0 : hold lock 1
+  // check holding lock or not
+  // bit[2*thid_+1] == 1 => hold lock, else no lock
+  // check lock type
+  // bit[2*thid] == 1 => write lock, else read lock
+
+
 
   
   Tuple() {

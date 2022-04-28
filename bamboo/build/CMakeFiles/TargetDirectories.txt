@@ -1,3 +1,0 @@
-/home/tatsu/non-wait/ccbench/bamboo/build/CMakeFiles/rebuild_cache.dir
-/home/tatsu/non-wait/ccbench/bamboo/build/CMakeFiles/ss2pl.exe.dir
-/home/tatsu/non-wait/ccbench/bamboo/build/CMakeFiles/edit_cache.dir
