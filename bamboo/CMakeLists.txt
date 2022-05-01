@@ -7,7 +7,7 @@ project(ccbench_bamboo
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/../cmake")
 
-option(ENABLE_SANITIZER "enable sanitizer on debug build" ON)
+option(ENABLE_SANITIZER "enable sanitizer on debug build" OFF)
 option(ENABLE_UB_SANITIZER "enable undefined behavior sanitizer on debug build" OFF)
 option(ENABLE_COVERAGE "enable coverage on debug build" OFF)
 

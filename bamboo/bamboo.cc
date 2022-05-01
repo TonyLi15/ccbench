@@ -44,6 +44,15 @@ void Tuple::ownersAdd(int txn)
   owners.push_back(txn);
 }
 
+void waitSema(int thid)
+{
+  int count = 0;
+  while (commit_semaphore[thid] > 0 && thread_stats[thid] == 0)
+  {
+    count++;
+  }
+}
+
 void worker(size_t thid, char &ready, const bool &start, const bool &quit)
 {
   Result &myres = std::ref(SS2PLResult[thid]);
@@ -136,16 +145,7 @@ void worker(size_t thid, char &ready, const bool &start, const bool &quit)
         goto RETRY;
       }
     }
-    count = 0;
-    while (commit_semaphore[thid] > 0 && thread_stats[thid] == 0)
-    {
-      // usleep(1);
-      count++;
-      // if (count % 10000 == 0)
-      // {
-      //   printf("TX%d WAITING TOO LONG\n", (int)thid);
-      // }
-    }
+    waitSema(thid);
     if (thread_stats[thid] == 1 || trans.status_ == TransactionStatus::aborted)
     {
       trans.status_ = TransactionStatus::aborted;
