@@ -41,7 +41,7 @@ long long int central_timestamp = 0; //*** added by tatsu
 
 void Tuple::ownersAdd(int txn)
 {
-  owners.push_back(txn);
+  owners.emplace_back(txn);
 }
 
 void waitSema(int thid)

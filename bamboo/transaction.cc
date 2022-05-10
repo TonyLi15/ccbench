@@ -725,7 +725,7 @@ bool Tuple::sortAdd(int txn, vector<int> &list)
 {
   if (list.size() == 0)
   {
-    list.push_back(txn);
+    list.emplace_back(txn);
     return true;
   }
   int i = myBinaryInsert(list, txn, list.size());
@@ -1669,7 +1669,7 @@ bool Tuple::sortAdd(int txn, vector<int> &list)
 {
   if (list.size() == 0)
   {
-    list.push_back(txn);
+    list.emplace_back(txn);
     return true;
   }
   int i = myBinaryInsert(list, txn, list.size());
