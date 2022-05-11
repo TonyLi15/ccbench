@@ -1,6 +1,8 @@
 // #define NONTS
 // #define FAIR
 // #define RANDOM
+#define ABORT_PENALTY (50000)
+
 
 #ifndef NONTS
 
@@ -155,6 +157,35 @@ void TxExecutor::warmupTuple(uint64_t key) {
   }
 }
 
+uint64_t get_sys_clock() {
+  static atomic<uint64_t> fake_clock;
+  return fake_clock.fetch_add(100, memory_order_seq_cst);
+}
+
+void TxExecutor::abortPenalty()
+{
+  while(1) {
+    uint64_t curr_time = get_sys_clock();
+    // uint64_t min_ready_time = UINT64_MAX;
+    
+    if (curr_time >= _abort_ready_time) {
+      should_abrt_slp = false;
+      break;
+    }
+    // else if (_abort_buffer.ready_time < min_ready_time) {
+    //   min_ready_time = _abort_buffer.ready_time;
+    // }
+    // usleep((min_ready_time - curr_time)/1000);
+    usleep((_abort_ready_time - curr_time)/1000);
+  }
+}
+
+void TxExecutor::initRand() {
+#ifdef ABORT_PENALTY
+  srand48_r((thid_ + 1) * get_sys_clock(), &buffer);
+#endif
+}
+
 /**
  * @brief function about abort.
  * Clean-up local read/write set.
@@ -174,6 +205,15 @@ void TxExecutor::abort()
   read_set_.clear();
   write_set_.clear();
   ++sres_->local_abort_counts_;
+
+#ifdef ABORT_PENALTY
+  uint64_t penalty;
+  double r;
+	drand48_r(&buffer, &r);
+	penalty = r * ABORT_PENALTY;
+  _abort_ready_time = get_sys_clock() + penalty;
+  should_abrt_slp = true;
+#endif
 
 #if BACK_OFF
 #if ADD_ANALYSIS
@@ -211,7 +251,12 @@ void TxExecutor::commit()
  * Allocate timestamp.
  * @return void
  */
-void TxExecutor::begin() { this->status_ = TransactionStatus::inFlight; }
+void TxExecutor::begin() { 
+  this->status_ = TransactionStatus::inFlight;
+#ifdef ABORT_PENALTY
+  if (should_abrt_slp) abortPenalty();
+#endif
+}
 
 /**
  * @brief Transaction read function.

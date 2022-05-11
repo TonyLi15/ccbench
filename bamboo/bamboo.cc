@@ -39,6 +39,8 @@
 
 long long int central_timestamp = 0; //*** added by tatsu
 
+uint64_t get_sys_clock();
+
 void Tuple::ownersAdd(int txn)
 {
   owners.emplace_back(txn);
@@ -65,6 +67,7 @@ void worker(size_t thid, char &ready, const bool &start, const bool &quit)
   int op_counter;
   int count;
   int last_retire = FLAGS_max_ope * RETIRERATIO;
+  trans.initRand();
 #if MASSTREE_USE
   MasstreeWrapper<Tuple>::thread_init(int(thid));
 #endif

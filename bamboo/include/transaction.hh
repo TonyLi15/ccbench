@@ -40,6 +40,9 @@ public:
   char write_val_[VAL_SIZE];
   char return_val_[VAL_SIZE];
 
+  bool should_abrt_slp = false;
+  uint64_t _abort_ready_time;
+  drand48_data buffer;
   // Tuple *tuple;
 
   TxExecutor(int thid, Result *sres) : thid_(thid), sres_(sres), txid_(thid) {
@@ -107,4 +110,8 @@ public:
   bool readWait(Tuple *tuple, uint64_t key);
   
   bool adjustFollowingSemaphore(Tuple *tuple, int txn);
+
+  void abortPenalty();
+
+  void initRand();
 };
