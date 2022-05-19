@@ -1,4 +1,4 @@
-// #define NONTS
+#define NONTS
 // #define FAIR
 // #define RANDOM
 
@@ -1456,6 +1456,7 @@ void TxExecutor::writelockAcquire(LockType EX_lock, uint64_t key, Tuple *tuple)
 void TxExecutor::cascadeAbort(int txn, Tuple *tuple, uint64_t key)
 {
   int t, tThread;
+  concat(tuple->retired, tuple->owners);
   for (int i = 0; i < all_owners.size; i++)
   {
     if (txn == all_owners.arr[i])
