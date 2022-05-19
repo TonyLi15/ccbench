@@ -33,7 +33,7 @@
 
 #define BAMBOO
 #define RETIRERATIO (1 - 0.15)
-// #define NONTS
+#define NONTS
 // #define RANDOM
 // #define INTERACTIVESLEEP (100)
 
@@ -52,6 +52,8 @@ void waitSema(int thid)
   while (commit_semaphore[thid] > 0 && thread_stats[thid] == 0)
   {
     count++;
+    // _mm_pause();
+    // std::this_thread::yield();
   }
 }
 
@@ -67,7 +69,6 @@ void worker(size_t thid, char &ready, const bool &start, const bool &quit)
   int op_counter;
   int count;
   int last_retire = FLAGS_max_ope * RETIRERATIO;
-  trans.initRand();
 #if MASSTREE_USE
   MasstreeWrapper<Tuple>::thread_init(int(thid));
 #endif
