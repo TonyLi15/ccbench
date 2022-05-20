@@ -114,5 +114,8 @@ ShowOptParameters() {
        << ": KEY_SIZE " << KEY_SIZE
        << ": KEY_SORT " << KEY_SORT
        << ": VAL_SIZE " << VAL_SIZE
+       << ": NONTS " << NONTS
+       << ": FAIR " << FAIR
+       << ": RANDOM " << RANDOM
        << endl;
 }

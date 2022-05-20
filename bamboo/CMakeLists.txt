@@ -79,6 +79,23 @@ else ()
     add_definitions(-DVAL_SIZE=4)
 endif ()
 
+if (DEFINED NONTS)
+    add_definitions(-DNONTS=${NONTS})
+    if (DEFINED FAIR)
+        add_definitions(-DFAIR=${FAIR})
+    else ()
+        add_definitions(-DFAIR=0)
+    endif ()
+else ()
+    add_definitions(-DNONTS=0)
+endif ()
+
+if (DEFINED RANDOM)
+    add_definitions(-DRANDOM=${RANDOM})
+else()
+    add_definitions(-DRANDOM=0)
+endif()
+
 # Tests
 enable_testing()
 

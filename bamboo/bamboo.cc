@@ -33,8 +33,6 @@
 
 #define BAMBOO
 #define RETIRERATIO (1 - 0.15)
-#define NONTS
-// #define RANDOM
 // #define INTERACTIVESLEEP (100)
 
 long long int central_timestamp = 0; //*** added by tatsu
@@ -86,13 +84,13 @@ void worker(size_t thid, char &ready, const bool &start, const bool &quit)
   {
     makeProcedure(trans.pro_set_, rnd, zipf, FLAGS_tuple_num, FLAGS_max_ope, FLAGS_thread_num,
                   FLAGS_rratio, FLAGS_rmw, FLAGS_ycsb, false, thid, myres);
-#ifndef NONTS
-#ifndef RANDOM
+#if NONTS == 0
+#if RANDOM == 0
     thread_timestamp[thid] = __atomic_add_fetch(&central_timestamp, 1, __ATOMIC_SEQ_CST);
 #endif
 #endif
   RETRY:
-#ifdef RANDOM
+#if RANDOM == 1
     thread_timestamp[thid] = rnd.next();
 #endif
     thread_stats[thid] = 0;

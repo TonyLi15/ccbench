@@ -1,9 +1,4 @@
-#define NONTS
-// #define FAIR
-// #define RANDOM
-
-
-#ifndef NONTS
+#if NONTS == 0
 
 #include <stdio.h>
 #include <string.h>
@@ -50,7 +45,7 @@ int myBinarySearch(vector<int> &x, int goal, int tail)
     int search_key = floor((head + tail) / 2);
     if (thread_timestamp[x[search_key]] == thread_timestamp[goal])
     {
-#ifdef RANDOM
+#if RANDOM
       assert(x[search_key] == goal);
 #endif
       return search_key;
@@ -478,7 +473,7 @@ void TxExecutor::checkWound(vector<int> &list, LockType lock_type, Tuple *tuple,
     }
     if (has_conflicts == true && thread_timestamp[thid_] <= thread_timestamp[t])
     {
-      TxPointers[t]->status_ = TransactionStatus::aborted;
+      thread_stats[t] = 1;
       it = woundRelease(t, tuple, key);
     }
     else
@@ -526,7 +521,7 @@ void TxExecutor::cascadeAbort(int txn, Tuple *tuple, uint64_t key)
       for (int j = i + 1; j < all_owners.size; j++)
       {
         t = all_owners.arr[j];
-        TxPointers[t]->status_ = TransactionStatus::aborted;
+        thread_stats[t] = 1;
         if (tuple->remove(t, tuple->retired) == false &&
             tuple->ownersRemove(t) == false)
         {
@@ -767,7 +762,7 @@ bool TxExecutor::spinWait(uint64_t key, Tuple *tuple)
           return true;
         }
       }
-      if (status_ == TransactionStatus::aborted)
+      if (thread_stats[thid_] == 1)
       {
         eraseFromLists(tuple);
         PromoteWaiters(tuple);
@@ -858,7 +853,7 @@ bool TxExecutor::lockUpgrade(uint64_t key, Tuple *tuple)
           return true;
         }
       }
-      if (status_ == TransactionStatus::aborted)
+      if (thread_stats[thid_] == 1)
       {
         tuple->lock_.w_unlock();
         return false;
@@ -940,7 +935,7 @@ bool TxExecutor::readWait(Tuple *tuple, uint64_t key)
           return true;
         }
       }
-      if (status_ == TransactionStatus::aborted)
+      if (thread_stats[thid_] == 1)
       {
         eraseFromLists(tuple);
         PromoteWaiters(tuple);
@@ -1134,7 +1129,7 @@ void TxExecutor::commit()
    */
   read_set_.clear();
   write_set_.clear();
-#ifdef FAIR
+#if FAIR == 1
   txid_ += FLAGS_thread_num;
 #endif
 }
