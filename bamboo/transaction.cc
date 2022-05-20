@@ -473,7 +473,7 @@ void TxExecutor::checkWound(vector<int> &list, LockType lock_type, Tuple *tuple,
     }
     if (has_conflicts == true && thread_timestamp[thid_] <= thread_timestamp[t])
     {
-      thread_stats[t] = 1;
+      TxPointers[t]->status_ = TransactionStatus::aborted;
       it = woundRelease(t, tuple, key);
     }
     else
@@ -521,7 +521,7 @@ void TxExecutor::cascadeAbort(int txn, Tuple *tuple, uint64_t key)
       for (int j = i + 1; j < all_owners.size; j++)
       {
         t = all_owners.arr[j];
-        thread_stats[t] = 1;
+        TxPointers[t]->status_ = TransactionStatus::aborted;
         if (tuple->remove(t, tuple->retired) == false &&
             tuple->ownersRemove(t) == false)
         {
@@ -762,7 +762,7 @@ bool TxExecutor::spinWait(uint64_t key, Tuple *tuple)
           return true;
         }
       }
-      if (thread_stats[thid_] == 1)
+      if (status_ == TransactionStatus::aborted)
       {
         eraseFromLists(tuple);
         PromoteWaiters(tuple);
@@ -853,7 +853,7 @@ bool TxExecutor::lockUpgrade(uint64_t key, Tuple *tuple)
           return true;
         }
       }
-      if (thread_stats[thid_] == 1)
+      if (status_ == TransactionStatus::aborted)
       {
         tuple->lock_.w_unlock();
         return false;
@@ -935,7 +935,7 @@ bool TxExecutor::readWait(Tuple *tuple, uint64_t key)
           return true;
         }
       }
-      if (thread_stats[thid_] == 1)
+      if (status_ == TransactionStatus::aborted)
       {
         eraseFromLists(tuple);
         PromoteWaiters(tuple);
@@ -1411,7 +1411,7 @@ void TxExecutor::checkWound(vector<int> &list, LockType lock_type, Tuple *tuple,
     }
     if (has_conflicts == true && txid_ < t)
     {
-      thread_stats[tThread] = 1;
+      TxPointers[tThread]->status_ = TransactionStatus::aborted;
       it = woundRelease(t, tuple, key);
     }
     else
@@ -1460,7 +1460,7 @@ void TxExecutor::cascadeAbort(int txn, Tuple *tuple, uint64_t key)
       {
         t = all_owners.arr[j];
         tThread = t % FLAGS_thread_num;
-        thread_stats[tThread] = 1;
+        TxPointers[tThread]->status_ = TransactionStatus::aborted;
         if (tuple->remove(t, tuple->retired) == false &&
             tuple->ownersRemove(t) == false)
         {
@@ -1704,11 +1704,10 @@ bool TxExecutor::spinWait(uint64_t key, Tuple *tuple)
           return true;
         }
       }
-      if (thread_stats[thid_] == 1)
+      if (status_ == TransactionStatus::aborted)
       {
         eraseFromLists(tuple);
         PromoteWaiters(tuple);
-        status_ = TransactionStatus::aborted; //*** added by tatsu
         tuple->lock_.w_unlock();
         return false;
       }
@@ -1796,9 +1795,8 @@ bool TxExecutor::lockUpgrade(uint64_t key, Tuple *tuple)
           return true;
         }
       }
-      if (thread_stats[thid_] == 1)
+      if (status_ == TransactionStatus::aborted)
       {
-        status_ = TransactionStatus::aborted; //*** added by tatsu
         tuple->lock_.w_unlock();
         return false;
       }

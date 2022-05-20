@@ -44,10 +44,10 @@ void Tuple::ownersAdd(int txn)
   owners.emplace_back(txn);
 }
 
-void waitSema(int thid)
+void waitSema(int thid, TxExecutor *trans)
 {
   int count = 0;
-  while (commit_semaphore[thid] > 0 && thread_stats[thid] == 0)
+  while (commit_semaphore[thid] > 0 && trans->status_ != TransactionStatus::aborted)
   {
     count++;
     // _mm_pause();
@@ -93,7 +93,6 @@ void worker(size_t thid, char &ready, const bool &start, const bool &quit)
 #if RANDOM == 1
     thread_timestamp[thid] = rnd.next();
 #endif
-    thread_stats[thid] = 0;
     commit_semaphore[thid] = 0;
     op_counter = 0;
     if (loadAcquire(quit))
@@ -140,17 +139,15 @@ void worker(size_t thid, char &ready, const bool &start, const bool &quit)
         ERR;
       }
 
-      if (thread_stats[thid] == 1)
+      if (trans.status_ == TransactionStatus::aborted)
       {
-        trans.status_ = TransactionStatus::aborted;
         trans.abort();
         goto RETRY;
       }
     }
-    waitSema(thid);
-    if (thread_stats[thid] == 1 || trans.status_ == TransactionStatus::aborted)
+    waitSema(thid, &trans);
+    if (trans.status_ == TransactionStatus::aborted)
     {
-      trans.status_ = TransactionStatus::aborted;
       trans.abort();
       goto RETRY;
     }
@@ -206,7 +203,6 @@ try
   makeDB();
   for (int i = 0; i < FLAGS_thread_num; i++)
   {
-    thread_stats[i] = 0;
     thread_timestamp[i] = 0;
     commit_semaphore[i] = 0;
   }

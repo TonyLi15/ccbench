@@ -88,6 +88,7 @@ if (DEFINED NONTS)
     endif ()
 else ()
     add_definitions(-DNONTS=0)
+    add_definitions(-DFAIR=0)
 endif ()
 
 if (DEFINED RANDOM)
