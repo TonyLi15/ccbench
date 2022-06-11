@@ -18,20 +18,31 @@ enum class TransactionStatus : uint8_t {
 
 extern void writeValGenerator(char *writeVal, size_t val_size, size_t thid);
 
+struct myVector {
+  int8_t size;
+#if FAIR
+  int arr[224];
+#else
+  int8_t arr[224];
+#endif
+  myVector() {
+    size = 0;
+    for (int i = 0; i < 224; i++) arr[i] = 0;
+  }
+};
+
 class TxExecutor {
 public:
   alignas(CACHE_LINE_SIZE) int thid_;
-  uint64_t txid_;
+  int txid_;
   TransactionStatus status_ = TransactionStatus::inFlight;
   Result *sres_;
   vector <SetElement<Tuple>> read_set_;
   vector <SetElement<Tuple>> write_set_;
   vector <Procedure> pro_set_;
-
+  myVector all_owners;
   char write_val_[VAL_SIZE];
   char return_val_[VAL_SIZE];
-
-  // Tuple *tuple;
 
   TxExecutor(int thid, Result *sres) : thid_(thid), sres_(sres), txid_(thid) {
     read_set_.reserve(FLAGS_max_ope);
@@ -87,7 +98,9 @@ public:
 
   vector<int>::iterator woundRelease(int txn, Tuple *tuple, uint64_t key);
   
-  void cascadeAbort(int txn, vector<int> all_owners, Tuple *tuple, uint64_t key);
+  void cascadeAbort(int txn, Tuple *tuple, uint64_t key);
+
+  void concat(vector<int> &r, vector<int> &o);
 
   void addCommitSemaphore(int t, LockType t_type, Tuple *tuple);
 

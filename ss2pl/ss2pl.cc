@@ -31,7 +31,7 @@
 #include "include/transaction.hh"
 #include "include/util.hh"
 
-#define INTERACTIVE
+// #define INTERACTIVE
 
 void worker(size_t thid, char &ready, const bool &start, const bool &quit) {
   Result &myres = std::ref(SS2PLResult[thid]);

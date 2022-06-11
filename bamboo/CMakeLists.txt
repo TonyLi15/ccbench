@@ -7,7 +7,7 @@ project(ccbench_bamboo
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/../cmake")
 
-option(ENABLE_SANITIZER "enable sanitizer on debug build" ON)
+option(ENABLE_SANITIZER "enable sanitizer on debug build" OFF)
 option(ENABLE_UB_SANITIZER "enable undefined behavior sanitizer on debug build" OFF)
 option(ENABLE_COVERAGE "enable coverage on debug build" OFF)
 
@@ -78,3 +78,64 @@ if (DEFINED VAL_SIZE)
 else ()
     add_definitions(-DVAL_SIZE=4)
 endif ()
+
+if (DEFINED NONTS)
+    add_definitions(-DNONTS=${NONTS})
+    if (DEFINED FAIR)
+        add_definitions(-DFAIR=${FAIR})
+    else ()
+        add_definitions(-DFAIR=0)
+    endif ()
+else ()
+    add_definitions(-DNONTS=0)
+    add_definitions(-DFAIR=0)
+endif ()
+
+if (DEFINED RANDOM)
+    add_definitions(-DRANDOM=${RANDOM})
+else()
+    add_definitions(-DRANDOM=0)
+endif()
+
+# Tests
+enable_testing()
+
+configure_file(CMakeLists.txt.in googletest-download/CMakeLists.txt)
+execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
+        RESULT_VARIABLE result
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/googletest-download )
+if(result)
+    message(FATAL_ERROR "CMake step for googletest failed: ${result}")
+endif()
+execute_process(COMMAND ${CMAKE_COMMAND} --build .
+        RESULT_VARIABLE result
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/googletest-download )
+if(result)
+    message(FATAL_ERROR "Build step for googletest failed: ${result}")
+endif()
+
+# Prevent overriding the parent project's compiler/linker
+# settings on Windows
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+
+# Add googletest directly to our build. This defines
+# the gtest and gtest_main targets.
+add_subdirectory(${CMAKE_CURRENT_BINARY_DIR}/googletest-src
+        ${CMAKE_CURRENT_BINARY_DIR}/googletest-build
+        EXCLUDE_FROM_ALL)
+
+# The gtest/gtest_main targets carry header search path
+# dependencies automatically when using CMake 2.8.11 or
+# later. Otherwise we have to add them here ourselves.
+if (CMAKE_VERSION VERSION_LESS 2.8.11)
+    include_directories("${gtest_SOURCE_DIR}/include")
+endif()
+
+add_executable(tests
+    test/main.cpp
+    "../../include/atomic_wrapper.hh"
+)
+target_link_libraries(tests 
+gtest_main
+ )
+add_test(NAME example_test COMMAND tests)

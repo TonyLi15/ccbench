@@ -52,9 +52,12 @@ DECLARE_bool(ycsb);
 DECLARE_double(zipf_skew);
 #endif
 
+class TxExecutor;
+
 alignas(CACHE_LINE_SIZE) GLOBAL Tuple *Table;
-alignas(CACHE_LINE_SIZE) GLOBAL int thread_stats[224]; // *** added by tatsu: thread_stats[i] = 1 means thread i needs to abort
-alignas(CACHE_LINE_SIZE) GLOBAL int thread_timestamp[224]; // *** added by tatsu
-alignas(CACHE_LINE_SIZE) GLOBAL int commit_semaphore[224]; // *** added by tatsu
-alignas(CACHE_LINE_SIZE) GLOBAL int pending_commit[224]; // *** added by tatsu
+alignas(CACHE_LINE_SIZE) GLOBAL int thread_stats[224];
+alignas(CACHE_LINE_SIZE) GLOBAL int thread_timestamp[224];
+alignas(CACHE_LINE_SIZE) GLOBAL int commit_semaphore[224];
+alignas(CACHE_LINE_SIZE) GLOBAL TxExecutor *TxPointers[224];
+// alignas(CACHE_LINE_SIZE) GLOBAL int pending_commit[224];
 

@@ -32,8 +32,8 @@
 #include "../include/util.hh"
 #include "../include/zipf.hh"
 
-#define INTERACTIVE
-#define INTERACTIVESLEEP (1)
+// #define INTERACTIVE
+// #define INTERACTIVESLEEP (1)
 
 using namespace std;
 

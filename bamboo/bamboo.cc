@@ -33,15 +33,26 @@
 
 #define BAMBOO
 #define RETIRERATIO (1 - 0.15)
-// #define NONTS
-// #define RANDOM
 // #define INTERACTIVESLEEP (100)
 
 long long int central_timestamp = 0; //*** added by tatsu
 
+uint64_t get_sys_clock();
+
 void Tuple::ownersAdd(int txn)
 {
-  owners.push_back(txn);
+  owners.emplace_back(txn);
+}
+
+void waitSema(int thid)
+{
+  int count = 0;
+  while (commit_semaphore[thid] > 0 && thread_stats[thid] == 0)
+  {
+    count++;
+    // _mm_pause();
+    // std::this_thread::yield();
+  }
 }
 
 void worker(size_t thid, char &ready, const bool &start, const bool &quit)
@@ -50,6 +61,7 @@ void worker(size_t thid, char &ready, const bool &start, const bool &quit)
   Xoroshiro128Plus rnd;
   rnd.init();
   TxExecutor trans(thid, (Result *)&myres);
+  TxPointers[thid] = &trans;
   FastZipf zipf(&rnd, FLAGS_zipf_skew, FLAGS_tuple_num);
   Backoff backoff(FLAGS_clocks_per_us);
   int op_counter;
@@ -72,13 +84,13 @@ void worker(size_t thid, char &ready, const bool &start, const bool &quit)
   {
     makeProcedure(trans.pro_set_, rnd, zipf, FLAGS_tuple_num, FLAGS_max_ope, FLAGS_thread_num,
                   FLAGS_rratio, FLAGS_rmw, FLAGS_ycsb, false, thid, myres);
-#ifndef NONTS
-#ifndef RANDOM
+#if NONTS == 0
+#if RANDOM == 0
     thread_timestamp[thid] = __atomic_add_fetch(&central_timestamp, 1, __ATOMIC_SEQ_CST);
 #endif
 #endif
   RETRY:
-#ifdef RANDOM
+#if RANDOM == 1
     thread_timestamp[thid] = rnd.next();
 #endif
     thread_stats[thid] = 0;
@@ -130,24 +142,13 @@ void worker(size_t thid, char &ready, const bool &start, const bool &quit)
 
       if (thread_stats[thid] == 1)
       {
-        trans.status_ = TransactionStatus::aborted;
         trans.abort();
         goto RETRY;
       }
     }
-    count = 0;
-    while (commit_semaphore[thid] > 0 && thread_stats[thid] == 0)
+    waitSema(thid);
+    if (thread_stats[thid] == 1)
     {
-      // usleep(1);
-      count++;
-      // if (count % 10000 == 0)
-      // {
-      //   printf("TX%d WAITING TOO LONG\n", (int)thid);
-      // }
-    }
-    if (thread_stats[thid] == 1 || trans.status_ == TransactionStatus::aborted)
-    {
-      trans.status_ = TransactionStatus::aborted;
       trans.abort();
       goto RETRY;
     }

@@ -11,11 +11,25 @@
 #include "include/common.hh"
 #include "include/transaction.hh"
 
-// #define NONTS
+#define NONTS
 
 using namespace std;
 
 extern void display_procedure_vector(std::vector<Procedure> &pro);
+
+void TxExecutor::warmupTuple(uint64_t key) {
+  Tuple *tuple;
+#if MASSTREE_USE
+  tuple = MT.get_value(key);
+#else
+  tuple = get_tuple(Table, key);
+#endif
+  for (int i = 0; i < FLAGS_thread_num; ++i) {
+    tuple->readers[i] = 0;
+    tuple->writers[i] = 0;
+  }
+  memcpy(tuple->val_, write_val_, VAL_SIZE);
+}
 
 /**
  * @brief Search xxx set
@@ -106,6 +120,9 @@ void TxExecutor::commit() {
    */
   read_set_.clear();
   write_set_.clear();
+#ifdef NONTS
+  txid_ += FLAGS_thread_num;
+#endif
 }
 
 /**
@@ -142,20 +159,12 @@ void TxExecutor::read(uint64_t key) {
   tuple = get_tuple(Table, key);
 #endif
 
-#ifdef DLR0
-  /**
-   * Acquire lock with wait.
-   */
-  tuple->lock_.r_lock();
-  r_lock_list_.emplace_back(&tuple->lock_);
-  read_set_.emplace_back(key, tuple, tuple->val_);
-#elif defined(DLR1)
 // *** added by tatsu from here
   while (1) {
     if (tuple->lock_.r_trylock()) {
       r_lock_list_.emplace_back(&tuple->lock_);
       read_set_.emplace_back(key, tuple, tuple->val_);
-      tuple->readers[this->thid_] = 1;
+      tuple->readers[thid_] = txid_;
       break;
     }
     else {
@@ -163,11 +172,11 @@ void TxExecutor::read(uint64_t key) {
        * wound wait
        */
       for (int i = 0; i < FLAGS_thread_num; i++) {
-        if (tuple->writers[i] == 1 && 
+        if (tuple->writers[i] >= 0 && 
         #ifndef NONTS
-        thread_timestamp[i] > thread_timestamp[this->thid_]) {
+        thread_timestamp[i] > thread_timestamp[thid_]) {
         #else
-        i > thid_) {
+        tuple->writers[i] > txid_) {
         #endif
           thread_stats[i] = 1;
         }
@@ -176,8 +185,6 @@ void TxExecutor::read(uint64_t key) {
       usleep(1);
     }
   }
-// to here ***
-#endif
 
 FINISH_READ:
 
@@ -211,20 +218,19 @@ void TxExecutor::write(uint64_t key) {
 #else
   tuple = get_tuple(Table, key);
 #endif
+  int owner;
   for (auto rItr = read_set_.begin(); rItr != read_set_.end(); ++rItr) {
     if ((*rItr).key_ == key) {  // hit
-#if DLR0
-      (*rItr).rcdptr_->lock_.upgrade();
-#elif defined(DLR1)
 // *** added by tatsu from here
       while (1) {
         if (!(*rItr).rcdptr_->lock_.tryupgrade()) {
           for (int i = 0; i < FLAGS_thread_num; i++) {
-            if ((tuple->writers[i] == 1 || tuple->readers[i] == 1) && 
+            owner = tuple->writers[i] + tuple->readers[i] + 1;
+            if (owner >= 0 && 
         #ifndef NONTS
-            thread_timestamp[i] > thread_timestamp[this->thid_]) {
+            thread_timestamp[i] > thread_timestamp[thid_]) {
         #else
-            i > thid_) {
+            owner > thid_) {
         #endif
               thread_stats[i] = 1;
             }
@@ -236,13 +242,11 @@ void TxExecutor::write(uint64_t key) {
           break;
         }
       }
-// to here ***
-#endif
 
       // upgrade success
       // remove old element of read lock list.
-      tuple->readers[this->thid_] = 0; // *** added by tatsu
-      tuple->writers[this->thid_] = 1; // *** added by tatsu
+      tuple->readers[thid_] = 0; // *** added by tatsu
+      tuple->writers[thid_] = txid_; // *** added by tatsu
       for (auto lItr = r_lock_list_.begin(); lItr != r_lock_list_.end();
            ++lItr) {
         if (*lItr == &((*rItr).rcdptr_->lock_)) {
@@ -258,22 +262,15 @@ void TxExecutor::write(uint64_t key) {
     }
   }
 
-
-#if DLR0
-  /**
-   * Lock with wait.
-   */
-  tuple->lock_.w_lock();
-#elif defined(DLR1)
-// *** added by tatsu from here
   while (1) {
     if (!tuple->lock_.w_trylock()) {
       for (int i = 0; i < FLAGS_thread_num; i++) {
-        if ((tuple->writers[i] == 1 || tuple->readers[i] == 1) && 
+        owner = tuple->writers[i] + tuple->readers[i] + 1;
+        if (owner && 
 #ifndef NONTS
         thread_timestamp[i] > thread_timestamp[this->thid_]) {
 #else
-        i > thid_) {
+        owner > thid_) {
 #endif
           thread_stats[i] = 1;
         }
@@ -285,13 +282,11 @@ void TxExecutor::write(uint64_t key) {
       break;
     }
   }
-// to here ***
-#endif
 
   /**
    * Register the contents to write lock list and write set.
    */
-  tuple->writers[this->thid_] = 1; // *** added by tatsu
+  tuple->writers[thid_] = txid_; // *** added by tatsu
   w_lock_list_.emplace_back(&tuple->lock_);
   write_set_.emplace_back(key, tuple);
 
@@ -312,10 +307,7 @@ void TxExecutor::readWrite(uint64_t key) {
   tuple = get_tuple(Table, key);
   for (auto rItr = read_set_.begin(); rItr != read_set_.end(); ++rItr) {
     if ((*rItr).key_ == key) {  // hit
-#if DLR0
-      (*rItr).rcdptr_->lock_.upgrade();
-#elif defined(DLR1)
-// *** added by tatsu from here
+
       while (1) {
         if (!(*rItr).rcdptr_->lock_.tryupgrade()) {
           for (int i = 0; i < FLAGS_thread_num; i++) {
@@ -331,8 +323,6 @@ void TxExecutor::readWrite(uint64_t key) {
           break;
         }
       }
-// to here ***
-#endif
 
       // upgrade success
       // remove old element of read set.
@@ -353,26 +343,6 @@ void TxExecutor::readWrite(uint64_t key) {
     }
   }
 
-  /**
-   * Search tuple from data structure.
-   */
-  //Tuple *tuple;
-#if MASSTREE_USE
-  tuple = MT.get_value(key);
-#if ADD_ANALYSIS
-  ++sres_->local_tree_traversal_;
-#endif
-#else
-  //tuple = get_tuple(Table, key);
-#endif
-
-#if DLR0
-  /**
-   * Lock with wait.
-   */
-  tuple->lock_.w_lock();
-#elif defined(DLR1)
-// *** added by tatsu from here
   while (1) {
     if (!tuple->lock_.w_trylock()) {
       for (int i = 0; i < FLAGS_thread_num; i++) {
@@ -388,8 +358,6 @@ void TxExecutor::readWrite(uint64_t key) {
       break;
     }
   }
-// to here ***
-#endif
 
   // read payload
   memcpy(this->return_val_, tuple->val_, VAL_SIZE);
@@ -414,13 +382,13 @@ void TxExecutor::unlockList() {
     (*itr)->r_unlock();
 
   for (auto itr = read_set_.begin(); itr != read_set_.end(); ++itr) // *** added by tatsu
-    (*itr).rcdptr_->readers[this->thid_] = 0;                       // *** added by tatsu
+    (*itr).rcdptr_->readers[this->thid_] = -1;                       // *** added by tatsu
 
   for (auto itr = w_lock_list_.begin(); itr != w_lock_list_.end(); ++itr)
     (*itr)->w_unlock();
 
   for (auto itr = write_set_.begin(); itr != write_set_.end(); ++itr) // *** added by tatsu
-    (*itr).rcdptr_->writers[this->thid_] = 0;                         // *** added by tatsu
+    (*itr).rcdptr_->writers[this->thid_] = -1;                         // *** added by tatsu
 
   /**
    * Clean-up local lock set.
