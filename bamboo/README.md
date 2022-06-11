@@ -49,6 +49,12 @@ default : `0`
 default : `1`
 - `VAL_SIZE` : Value of key-value size. In other words, payload size.<br>
 default : `4`
+- `NONTS` : If this is 1, transactions use their thread IDs as timestamps.
+default : `0`
+  - suboption `FAIR` : If both this and `NONTS` are 1, threads increment their IDs to take turn committing transactions.
+  default : `0`
+- `RANDOM` : If this is 1, transactions randomly generate timestamps.
+default : `0`
 
 ## Optimizations
 - Backoff.
