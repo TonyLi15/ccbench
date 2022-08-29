@@ -23,7 +23,7 @@ struct myVector {
 #if FAIR
   int arr[224];
 #else
-  int8_t arr[224];
+  int arr[224];
 #endif
   myVector() {
     size = 0;

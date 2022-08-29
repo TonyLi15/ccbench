@@ -14,6 +14,7 @@
 #include "include/transaction.hh"
 
 #define OPT1
+#define NORETIRE
 
 using namespace std;
 
@@ -453,7 +454,9 @@ void TxExecutor::PromoteWaiters(Tuple *tuple)
     }
     tuple->remove(t, tuple->waiters);
     tuple->ownersAdd(t);
+#ifndef NORETIRE
     addCommitSemaphore(t, t_type, tuple);
+#endif
   }
 }
 
@@ -490,8 +493,9 @@ void TxExecutor::writelockAcquire(LockType EX_lock, uint64_t key, Tuple *tuple)
   {
     if (tuple->lock_.w_trylock())
     {
-      checkWound(tuple->retired, EX_lock, tuple, key);
       checkWound(tuple->owners, EX_lock, tuple, key);
+#ifndef NORETIRE
+      checkWound(tuple->retired, EX_lock, tuple, key);
       if (tuple->owners.size() == 0 && 
       (tuple->waiters.size() == 0 || thread_timestamp[thid_] < thread_timestamp[tuple->waiters[0]]))
       {
@@ -500,9 +504,12 @@ void TxExecutor::writelockAcquire(LockType EX_lock, uint64_t key, Tuple *tuple)
       }
       else
       {
+#endif
         tuple->sortAdd(thid_, tuple->waiters);
         PromoteWaiters(tuple);
+#ifndef NORETIRE
       }
+#endif
       tuple->lock_.w_unlock();
       return;
     }
@@ -555,7 +562,7 @@ vector<int>::iterator TxExecutor::woundRelease(int txn, Tuple *tuple, uint64_t k
   int head;
   LockType head_type;
   // auto all_owners = concat(tuple->retired, tuple->owners);
-
+#ifndef NORETIRE
   if (tuple->retired.size() && tuple->retired[0] == txn)
   {
     was_head = true;
@@ -572,7 +579,9 @@ vector<int>::iterator TxExecutor::woundRelease(int txn, Tuple *tuple, uint64_t k
       }
     }
   }
+#endif
   auto it = tuple->itrRemove(txn);
+#ifndef NORETIRE
   concat(tuple->retired, tuple->owners);
   if (all_owners.size)
   {
@@ -589,6 +598,7 @@ vector<int>::iterator TxExecutor::woundRelease(int txn, Tuple *tuple, uint64_t k
       }
     }
   }
+#endif
   tuple->req_type[txn] = 0;
   return it;
 }
@@ -609,6 +619,7 @@ bool TxExecutor::LockRelease(bool is_abort, uint64_t key, Tuple *tuple)
         return false;
       }
       // auto all_owners = concat(tuple->retired, tuple->owners);
+#ifndef NORETIRE
       was_head = false;
       if (tuple->retired.size() > 0 && tuple->retired[0] == thid_)
       {
@@ -618,11 +629,13 @@ bool TxExecutor::LockRelease(bool is_abort, uint64_t key, Tuple *tuple)
       {
         cascadeAbort(thid_, tuple, key);
       }
+#endif
       if (tuple->remove(thid_, tuple->retired) == false &&
           tuple->ownersRemove(thid_) == false)
       {
         exit(1);
       }
+#ifndef NORETIRE
       concat(tuple->retired, tuple->owners);
       if (all_owners.size)
       {
@@ -639,6 +652,7 @@ bool TxExecutor::LockRelease(bool is_abort, uint64_t key, Tuple *tuple)
           }
         }
       }
+#endif
       tuple->req_type[thid_] = 0;
       PromoteWaiters(tuple);
       tuple->lock_.w_unlock();
@@ -749,9 +763,11 @@ bool TxExecutor::spinWait(uint64_t key, Tuple *tuple)
           if (tuple->req_type[thid_] == -1)
           {
             read_set_.emplace_back(key, tuple, tuple->val_);
+#ifndef NORETIRE
             tuple->ownersRemove(thid_);
             tuple->sortAdd(thid_, tuple->retired);
             PromoteWaiters(tuple);
+#endif
           }
 #endif
           else if (tuple->req_type[thid_] == 1) 
@@ -794,8 +810,9 @@ bool TxExecutor::lockUpgrade(uint64_t key, Tuple *tuple)
   {
     if (tuple->lock_.w_trylock())
     {
-      checkWound(tuple->retired, LockType::EX, tuple, key);
       checkWound(tuple->owners, LockType::EX, tuple, key);
+#ifndef NORETIRE
+      checkWound(tuple->retired, LockType::EX, tuple, key);
       is_retired = false;
       for (i = 0; i < tuple->retired.size(); i++)
       {
@@ -835,9 +852,11 @@ bool TxExecutor::lockUpgrade(uint64_t key, Tuple *tuple)
       }
       else
       {
+#endif
         if (tuple->owners.size() == 1 && tuple->owners[0] == thid_)
         {
           tuple->req_type[thid_] = LockType::EX;
+#ifndef NORETIRE
           for (int i = 0; i < tuple->retired.size(); i++)
           {
             r = tuple->retired[i];
@@ -849,10 +868,13 @@ bool TxExecutor::lockUpgrade(uint64_t key, Tuple *tuple)
               break;
             }
           }
+#endif
           tuple->lock_.w_unlock();
           return true;
         }
+#ifndef NORETIRE
       }
+#endif
       if (thread_stats[thid_] == 1)
       {
         tuple->lock_.w_unlock();
@@ -872,8 +894,9 @@ bool TxExecutor::readlockAcquire(LockType SH_lock, uint64_t key, Tuple *tuple)
   {
     if (tuple->lock_.w_trylock())
     {
-      checkWound(tuple->retired, SH_lock, tuple, key);
       checkWound(tuple->owners, SH_lock, tuple, key);
+#ifndef NORETIRE
+      checkWound(tuple->retired, SH_lock, tuple, key);
       if (tuple->owners.size() == 0 && 
       (tuple->waiters.size() == 0 || thread_timestamp[thid_] < thread_timestamp[tuple->waiters[0]]))
       {
@@ -884,9 +907,12 @@ bool TxExecutor::readlockAcquire(LockType SH_lock, uint64_t key, Tuple *tuple)
       }
       else
       {
+#endif
         tuple->sortAdd(thid_, tuple->waiters);
         PromoteWaiters(tuple);
+#ifndef NORETIRE
       }
+#endif
       tuple->lock_.w_unlock();
       return is_retired;
     }
@@ -964,6 +990,7 @@ bool TxExecutor::readWait(Tuple *tuple, uint64_t key)
 #include "include/transaction.hh"
 
 #define OPT1
+#define NORETIRE
 
 using namespace std;
 
@@ -1390,7 +1417,9 @@ void TxExecutor::PromoteWaiters(Tuple *tuple)
     }
     tuple->remove(t, tuple->waiters);
     tuple->ownersAdd(t);
+#ifndef NORETIRE
     addCommitSemaphore(t, t_type, tuple);
+#endif
   }
 }
 
@@ -1428,8 +1457,9 @@ void TxExecutor::writelockAcquire(LockType EX_lock, uint64_t key, Tuple *tuple)
   {
     if (tuple->lock_.w_trylock())
     {
-      checkWound(tuple->retired, EX_lock, tuple, key);
       checkWound(tuple->owners, EX_lock, tuple, key);
+#ifndef NORETIRE
+      checkWound(tuple->retired, EX_lock, tuple, key);
       if (tuple->owners.size() == 0 && 
       (tuple->waiters.size() == 0 || txid_ < tuple->waiters[0]))
       {
@@ -1438,9 +1468,12 @@ void TxExecutor::writelockAcquire(LockType EX_lock, uint64_t key, Tuple *tuple)
       }
       else
       {
+#endif
         tuple->sortAdd(txid_, tuple->waiters);
         PromoteWaiters(tuple);
+#ifndef NORETIRE
       }
+#endif
       tuple->lock_.w_unlock();
       return;
     }
@@ -1495,7 +1528,8 @@ vector<int>::iterator TxExecutor::woundRelease(int txn, Tuple *tuple, uint64_t k
   LockType type = (LockType)tuple->req_type[txnThread];
   int head, headThread;
   LockType head_type;
-  
+
+#ifndef NORETIRE
   if (tuple->retired.size() && tuple->retired[0] == txn)
   {
     was_head = true;
@@ -1512,7 +1546,9 @@ vector<int>::iterator TxExecutor::woundRelease(int txn, Tuple *tuple, uint64_t k
       }
     }
   }
+#endif
   auto it = tuple->itrRemove(txn);
+#ifndef NORETIRE
   concat(tuple->retired, tuple->owners);
   if (all_owners.size)
   {
@@ -1530,6 +1566,7 @@ vector<int>::iterator TxExecutor::woundRelease(int txn, Tuple *tuple, uint64_t k
       }
     }
   }
+#endif
   tuple->req_type[txnThread] = 0;
   return it;
 }
@@ -1549,6 +1586,7 @@ bool TxExecutor::LockRelease(bool is_abort, uint64_t key, Tuple *tuple)
         tuple->lock_.w_unlock();
         return false;
       }
+#ifndef NORETIRE
       if (tuple->retired.size() > 0 && tuple->retired[0] == txid_)
       {
         was_head = true;
@@ -1557,12 +1595,14 @@ bool TxExecutor::LockRelease(bool is_abort, uint64_t key, Tuple *tuple)
       {
         cascadeAbort(txid_, tuple, key); // lock is released here
       }
+#endif
       if (tuple->remove(txid_, tuple->retired) == false &&
           tuple->ownersRemove(txid_) == false)
       {
         printf("REMOVE FAILURE: LockRelease tx%d\n", txid_);
         exit(1);
       }
+#ifndef NORETIRE
       concat(tuple->retired, tuple->owners);
       if (all_owners.size)
       {
@@ -1580,6 +1620,7 @@ bool TxExecutor::LockRelease(bool is_abort, uint64_t key, Tuple *tuple)
           }
         }
       }
+#endif
       tuple->req_type[thid_] = 0;
       PromoteWaiters(tuple);
       tuple->lock_.w_unlock();
@@ -1691,9 +1732,11 @@ bool TxExecutor::spinWait(uint64_t key, Tuple *tuple)
           if (tuple->req_type[thid_] == -1)
           {
             read_set_.emplace_back(key, tuple, tuple->val_);
+#ifndef NORETIRE
             tuple->ownersRemove(txid_);
             tuple->sortAdd(txid_, tuple->retired);
             PromoteWaiters(tuple);
+#endif
           }
 #endif
           else if (tuple->req_type[thid_] == 1) 
@@ -1736,8 +1779,9 @@ bool TxExecutor::lockUpgrade(uint64_t key, Tuple *tuple)
   {
     if (tuple->lock_.w_trylock())
     {
-      checkWound(tuple->retired, LockType::EX, tuple, key);
       checkWound(tuple->owners, LockType::EX, tuple, key);
+#ifndef NORETIRE
+      checkWound(tuple->retired, LockType::EX, tuple, key);
       is_retired = false;
       for (i = 0; i < tuple->retired.size(); i++)
       {
@@ -1777,9 +1821,11 @@ bool TxExecutor::lockUpgrade(uint64_t key, Tuple *tuple)
       }
       else
       {
+#endif
         if (tuple->owners.size() == 1 && tuple->owners[0] == txid_)
         {
           tuple->req_type[thid_] = LockType::EX;
+#ifndef NORETIRE
           for (int i = 0; i < tuple->retired.size(); i++)
           {
             r = tuple->retired[i];
@@ -1791,10 +1837,13 @@ bool TxExecutor::lockUpgrade(uint64_t key, Tuple *tuple)
               break;
             }
           }
+#endif
           tuple->lock_.w_unlock();
           return true;
         }
+#ifndef NORETIRE
       }
+#endif
       if (status_ == TransactionStatus::aborted)
       {
         tuple->lock_.w_unlock();
@@ -1816,8 +1865,9 @@ bool TxExecutor::readlockAcquire(LockType SH_lock, uint64_t key, Tuple *tuple)
   {
     if (tuple->lock_.w_trylock())
     {
-      checkWound(tuple->retired, SH_lock, tuple, key);
       checkWound(tuple->owners, SH_lock, tuple, key);
+#ifndef NORETIRE
+      checkWound(tuple->retired, SH_lock, tuple, key);
       if (tuple->owners.size() == 0 && 
       (tuple->waiters.size() == 0 || txid_ < tuple->waiters[0]))
       {
@@ -1828,9 +1878,12 @@ bool TxExecutor::readlockAcquire(LockType SH_lock, uint64_t key, Tuple *tuple)
       }
       else
       {
+#endif
         tuple->sortAdd(txid_, tuple->waiters);
         PromoteWaiters(tuple);
+#ifndef NORETIRE
       }
+#endif
       tuple->lock_.w_unlock();
       return is_retired;
     }
