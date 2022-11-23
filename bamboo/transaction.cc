@@ -14,7 +14,7 @@
 #include "include/transaction.hh"
 
 #define OPT1
-#define NORETIRE
+// #define NORETIRE
 
 using namespace std;
 
@@ -990,7 +990,7 @@ bool TxExecutor::readWait(Tuple *tuple, uint64_t key)
 #include "include/transaction.hh"
 
 #define OPT1
-#define NORETIRE
+// #define NORETIRE
 
 using namespace std;
 

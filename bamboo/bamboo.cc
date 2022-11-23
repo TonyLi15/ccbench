@@ -35,7 +35,7 @@
 #define RETIRERATIO (1 - 0.05)
 // #define INTERACTIVESLEEP (100)
 
-long long int central_timestamp = 0; //*** added by tatsu
+long long int central_timestamp = 0;
 
 uint64_t get_sys_clock();
 
@@ -236,13 +236,12 @@ try
   }
   ShowOptParameters();
   SS2PLResult[0].displayAllResult(FLAGS_clocks_per_us, FLAGS_extime, FLAGS_thread_num);
-  // cout << "first thread commit:\t" << SS2PLResult[0].local_commit_counts_ << endl;
-  // cout << "last thread commit:\t" << SS2PLResult[FLAGS_thread_num - 1].local_commit_counts_ << endl;
-  // calcSD();
-  // for (unsigned int i = 0; i < FLAGS_thread_num; ++i)
-  // {
-  //   printf("%d,", SS2PLResult[i].local_commit_counts_);
-  // }
+  cout << "first thread commit:\t" << SS2PLResult[0].local_commit_counts_ << endl;
+  cout << "last thread commit:\t" << SS2PLResult[FLAGS_thread_num - 1].local_commit_counts_ << endl;
+  for (unsigned int i = 0; i < FLAGS_thread_num; ++i)
+  {
+    printf("%d,", SS2PLResult[i].local_commit_counts_);
+  }
   return 0;
 }
 catch (bad_alloc)
