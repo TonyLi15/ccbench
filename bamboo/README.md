@@ -35,7 +35,7 @@ $ ./bamboo.exe -help
 ```
 - Execution example 
 ```
-$ numactl --interleave=all ./ss2pl.exe -clocks_per_us=2100 -extime=3 -max_ope=10 -rmw=0 -rratio=100 -thread_num=224 -tuple_num=1000000 -ycsb=1 -zipf_skew=0
+$ numactl --interleave=all ./bamboo.exe -clocks_per_us=2100 -extime=3 -max_ope=10 -rmw=0 -rratio=100 -thread_num=224 -tuple_num=1000000 -ycsb=1 -zipf_skew=0
 ```
 
 ## How to customize options in CMakeLists.txt
