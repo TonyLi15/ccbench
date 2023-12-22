@@ -235,7 +235,7 @@ void TxExecutor::write(uint64_t key) {
   // cout << "tuple reader_ = " << tuple->reader_ << endl;
   // cout << "tuple writer_ = " << tuple->writer_ << endl;
   for (auto rItr = read_set_.begin(); rItr != read_set_.end(); ++rItr) {
-    if ((*rItr).key_ == key) {  // hit
+    if ((*rItr).key_ == key) {  // find in readset -> upgradeの可能性がある
       while(1) {
         if(!tuple->latch_.w_trylock()) {
           usleep(1);
@@ -279,37 +279,40 @@ void TxExecutor::write(uint64_t key) {
     }
   }
 
-  while (1) {
-    if(!tuple->latch_.w_trylock()) {
+  while (1) { // if not in readset
+    if(!tuple->latch_.w_trylock()) { // tupleの中の値を見るためlatchを取る
       usleep(1);
-      continue;
+      continue; // goto line 282
     }
-    if(tuple->writeflag_) {
-      if(txid_ > tuple->writer_) {
+    if(tuple->writeflag_) { // writeflag_ is true
+      if(txid_ > tuple->writer_) {　// my txid is larger (my tx is younger) -> abort
         tuple->latch_.w_unlock();
         status_ = TransactionStatus::aborted;
         goto FINISH_WRITE;
       }
-      tuple->latch_.w_unlock();
+      tuple->latch_.w_unlock(); // my txid is smaller (my tx is older) -> wait
       usleep(1);
-      continue;
+      continue; // goto line 282
     }
-    tuple->writeflag_ = true;
-    tuple->writer_ = txid_;
-    if(txid_ > tuple->reader_) {
+    // ここから writeflag_ is false
+    tuple->writeflag_ = true; // 予約-> 必要？
+    tuple->writer_ = txid_;　// 予約-> 必要？
+    if(txid_ > tuple->reader_) { //my txid is yonger than reader -> abort
         tuple->writeflag_ = false;
         tuple->latch_.w_unlock();
         status_ = TransactionStatus::aborted;
         goto FINISH_WRITE;
     }
-    tuple->latch_.w_unlock();
+    tuple->latch_.w_unlock(); // unlatch
+    // 他のwriterが来ないのが保証されてる
     while(1){
-        if(tuple->lock_.w_trylock()) {
-          tuple->writer_ = txid_;
-          write_set_.emplace_back(key, tuple);
+        if(tuple->lock_.w_trylock()) {//trywritelockが成功
+          //readerがいなくなった
+          tuple->writer_ = txid_;　//writerが自分になる
+          write_set_.emplace_back(key, tuple);　//writeできる
           goto FINISH_WRITE;
         }
-        if(txid_ > tuple->reader_) {
+        if(txid_ > tuple->reader_) {// trywritelockが失敗で　my txid is yonger than reader -> abort
           tuple->writeflag_ = false;
             status_ = TransactionStatus::aborted;
             goto FINISH_WRITE;

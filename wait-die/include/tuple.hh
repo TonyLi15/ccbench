@@ -14,9 +14,9 @@ using namespace std;
 class Tuple {
 public:
   alignas(CACHE_LINE_SIZE) RWLock lock_;
-  RWLock latch_;
+  RWLock latch_; // for lock, writer_, reader_, writeflag_
   char val_[VAL_SIZE];
-  uint32_t writer_;
-  uint32_t reader_;
-  bool writeflag_;
+  uint32_t writer_; //txid
+  uint32_t reader_; //txid
+  bool writeflag_; //writeflag_ = true, writer_ = 1 => tx1 is acquiring write lock
 };
