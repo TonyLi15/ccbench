@@ -171,27 +171,27 @@ void TxExecutor::read(uint64_t key) {
   tuple = get_tuple(Table, key);
 #endif
   while(1) {
-      if(!tuple->latch_.w_trylock()) {
+      if(!tuple->latch_.w_trylock()) { // tupleの中の値を見るためlatchを取る
         usleep(1);
-        continue;
+        continue;　// goto line 173
       }
-      if(tuple->writeflag_) {
-          if(txid_ > tuple->writer_) {
+      if(tuple->writeflag_) { // writeflag_ is true
+          if(txid_ > tuple->writer_) { // my txid is larger (my tx is younger) -> abort
               tuple->latch_.w_unlock();
               status_ = TransactionStatus::aborted;
               goto FINISH_READ; 
           }
-          tuple->latch_.w_unlock();
+          tuple->latch_.w_unlock(); // my txid is smaller (my tx is older) -> wait
           usleep(1);
-          continue;
+          continue; // goto line 173
       }
-      else {
+      else { // writeflag_ is false
           while(1) {
-              if(tuple->lock_.r_trylock()) {
-                if(txid_ < tuple->reader_)
+              if(tuple->lock_.r_trylock()) { // tryreadlockが成功
+                if(txid_ < tuple->reader_) // my txid is smaller (my tx is older) than previous reader -> set reader_ to my txid
                   tuple->reader_ = txid_;
-                tuple->latch_.w_unlock();
-                read_set_.emplace_back(key, tuple, tuple->val_);
+                tuple->latch_.w_unlock(); // unlatch
+                read_set_.emplace_back(key, tuple, tuple->val_); // readできる
                 goto FINISH_READ;
               }
               usleep(1);
@@ -261,19 +261,19 @@ void TxExecutor::write(uint64_t key) {
         }
         tuple->latch_.w_unlock();
         while(1) { 
-          if(tuple->lock_.tryupgrade()) {
-            tuple->reader_ = UNLOCKED;
-            tuple->writer_ = txid_;
-            write_set_.emplace_back(key, (*rItr).rcdptr_);
-            read_set_.erase(rItr);
+          if(tuple->lock_.tryupgrade()) { //tryupgradeが成功
+            tuple->reader_ = UNLOCKED; // set reader_ to UNLOCKED
+            tuple->writer_ = txid_; // set writer_ to my txid (myself)
+            write_set_.emplace_back(key, (*rItr).rcdptr_); // writeして, write_set_に追加
+            read_set_.erase(rItr); // read_set_から削除
             goto FINISH_WRITE;
           }
-          if(txid_ > tuple->reader_) {
+          if(txid_ > tuple->reader_) { // tryupgradeが失敗で　my txid is larger (I am younger) than reader -> abort
             tuple->writeflag_ = false;
             status_ = TransactionStatus::aborted;
             goto FINISH_WRITE;
           }
-          usleep(1);
+          usleep(1); // tryupgradeが失敗で　my txid is smaller (I am older) than reader -> wait
         }
       }
     }
@@ -306,18 +306,18 @@ void TxExecutor::write(uint64_t key) {
     tuple->latch_.w_unlock(); // unlatch
     // 他のwriterが来ないのが保証されてる
     while(1){
-        if(tuple->lock_.w_trylock()) {//trywritelockが成功
+        if(tuple->lock_.w_trylock()) { // trywritelockが成功
           //readerがいなくなった
-          tuple->writer_ = txid_;　//writerが自分になる
-          write_set_.emplace_back(key, tuple);　//writeできる
+          tuple->writer_ = txid_;　// writerが自分になる
+          write_set_.emplace_back(key, tuple);　// writeできる
           goto FINISH_WRITE;
         }
-        if(txid_ > tuple->reader_) {// trywritelockが失敗で　my txid is yonger than reader -> abort
+        if(txid_ > tuple->reader_) {// trywritelockが失敗で　my txid is larger (I am younger )than reader -> abort
           tuple->writeflag_ = false;
             status_ = TransactionStatus::aborted;
             goto FINISH_WRITE;
         }
-        usleep(1);
+        usleep(1); // trywritelockが失敗で　my txid is smaller (I am older) than reader -> wait
     }
   }
 
