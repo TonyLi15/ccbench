@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <string>
 
+#include "../include/backoff.hh"
 #include "include/atomic_tool.hh"
 #include "include/log.hh"
 #include "include/transaction.hh"
